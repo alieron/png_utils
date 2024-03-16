@@ -1,7 +1,7 @@
 ## 2x2 Test image
-<img src="2x2_fixed_huffman.png" width="200"/>
+<img src="images/2x2_fixed_huffman.png" width="200"/>
 
-### Hexdump of 2x2_uncompressed.png(BTYPE = 00)
+### Hexdump of 2x2_uncompressed.png(BTYPE = 00) ✅
 Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed.png`
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
@@ -11,6 +11,40 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 000040: ba ff 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
 000050: 4e 44 ae 42 60 82                                ND.B`.
 ```
+
+### Hexdump of 2x2_filter01.png(BTYPE=00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
+000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
+000030: 00 00 00 00 ff 00 00 00 00 01 32 3c 39 ff 1d 52  ..........2<9..R
+000040: 81 00 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
+000050: 4e 44 ae 42 60 82                                ND.B`.
+```
+
+### Hexdump of 2x2_filter02.png(BTYPE=00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
+000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
+000030: 00 00 00 00 ff 00 00 00 00 02 32 3c 39 00 4f 8e  ..........2<9.O.
+000040: ba ff 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
+000050: 4e 44 ae 42 60 82                                ND.B`.
+```
+
+### Hexdump of 2x2_filter03.png(BTYPE=00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
+000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
+000030: 00 00 00 00 ff 00 00 00 00 03 32 3c 39 80 36 70  ..........2<9.6p
+000040: 9e bf 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
+000050: 4e 44 ae 42 60 82                                ND.B`.
+```
+TODO: 04, 3x
 
 ### Hexdump of 2x2_fixed_huffman.png(BTYPE = 01)
 ```
@@ -23,9 +57,9 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 ```
 
 ## 2x2 Single Color Test image
-<img src="2x2_blue.png" width="200"/>
+<img src="images/2x2_blue.png" width="200"/>
 
-### Hexdump of 2x2_blue_uncompressed.png(BTYPE = 00)
+### Hexdump of 2x2_blue_uncompressed.png(BTYPE = 00) ✅
 Generated with `pngcrush -force -m 1 -l 0 2x2_blue_filterdemo.png 2x2_blue_uncompressed.png`
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
@@ -34,6 +68,17 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_blue_filterdemo.png 2x2_blue_uncom
 000030: 00 15 13 e3 15 13 e3 00 15 13 e3 15 13 e3 1a 0a  ................
 000040: 04 2d 7a f8 96 54 00 00 00 00 49 45 4e 44 ae 42  .-z..T....IEND.B
 000050: 60 82                                            `.
+```
+
+### Hexdump of 2x2_blue_filter12.png(BTYPE=00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
+000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
+000030: 01 15 13 e3 ff 00 00 00 00 02 00 00 00 00 00 00  ................
+000040: 00 00 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
+000050: 4e 44 ae 42 60 82                                ND.B`.
 ```
 
 ### Hexdump of 2x2_blue.png(BTYPE = 01)
@@ -56,7 +101,7 @@ Generated with `pngcrush -force -m 1 -l 1 2x2_blue_filterdemo.png 2x2_blue_.png`
 ```
 
 ## 6x6 Dynamic Huffman Test Image
-<img src="6x6_dynamic_huffman.png" width="200"/>
+<img src="images/6x6_dynamic_huffman.png" width="200"/>
 
 ### Hexdump of 6x6_dynamic_huffman.png(BTYPE = 10)
 ```
@@ -72,9 +117,9 @@ Generated with `pngcrush -force -m 1 -l 1 2x2_blue_filterdemo.png 2x2_blue_.png`
 
 
 ## Oak log image
-<img src="oak_log_top.png" width="200"/>
+<img src="images/oak_log_top.png" width="200"/>
 
-### Hexdump of oak_log_uncompressed.png(BTYPE = 00)
+### Hexdump of oak_log_uncompressed.png(BTYPE = 00) ✅
 Generated with `pngcrush -force -m 1 -l 0 oak_log_top.png oak_log_uncompressed.png`
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR

@@ -388,11 +388,11 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 
 
 int main() {
-	// hexdumpPNG("2x2_uncompressed.png");
+	hexdumpPNG("images/2x2_filter03.png");
 
     // PNG_data pngdata = openPNG("2x2_uncompressed.png");
 	int width, height, channels;
-    uint8_t *RGBAarray = openPNG("2x2_uncompressed.png", &width, &height, &channels);
+    uint8_t *RGBAarray = openPNG("images/2x2_filter03.png", &width, &height, &channels);
     // uint8_t *RGBAarray = openPNG("oak_log_uncompressed.png", &width, &height, &channels);
 
 
