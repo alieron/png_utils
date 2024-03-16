@@ -1,0 +1,1 @@
+g++ -g png_utils.cpp -o bin/png_utils && ./bin/png_utils
