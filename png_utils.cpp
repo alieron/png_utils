@@ -67,7 +67,7 @@ void drawRGBAarray(int width, int height, int nchannels, unsigned char *img_RGBA
 			int index = nchannels*(h*width+w);
 
             if (nchannels == 4 && !(img_RGBA[index+3])) {
-                printf("\x1b[0m ");
+                printf("\x1b[0m  ");
             } else {
  				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+1], (int)img_RGBA[index+2]);
 			}
@@ -113,11 +113,9 @@ static int validsignature(uint8_t **pbuffer) {
 }
 
 // Returns the length and type of the current chunk from the first 8 bytes of the chunk
-PNG_chunk_header getchunkheader(uint8_t **pbuffer) {
-	PNG_chunk_header chunk;
-	chunk.length = get4bytes(pbuffer);
-	chunk.type = get4bytes(pbuffer);
-	return chunk;
+static void getchunkheader(uint8_t **pbuffer, PNG_chunk_header *chunk) {
+	chunk->length = get4bytes(pbuffer);
+	chunk->type = get4bytes(pbuffer);
 }
 
 // Get last n bits from the right most byte in the zstream
@@ -207,12 +205,7 @@ static int paeth(int a, int b, int c) {
 }
 
 // Writes the de-filtered scanlines to the image->colorarray
-static int createRGBAarray(PNG_data *image, uint8_t *scanlines, int interlace) {
-	if (interlace) {
-		//deinterlace maybe?
-		 return 0; //TODO: support for interlace = 1
-	}
-
+static int createRGBAarray(PNG_data *image, uint8_t *scanlines) {
 	int bytes = (image->depth == 16 ? 2 : 1);//bytes per components
 	int bpl = image->channels * bytes * image->width;
 	int sep = image->channels * bytes;
@@ -286,9 +279,11 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 
 	zlib_stream zstream;
 	zstream.buffer = NULL;
+
+	PNG_chunk_header chunk;
 	
     for (;;) {
-		PNG_chunk_header chunk = getchunkheader(&bp);
+		getchunkheader(&bp, &chunk);
 		switch(chunk.type) {
 			case CHUNK_TYPE('I','H','D','R'):
 				if (!first) return 0; //TODO: Add error handling
@@ -302,7 +297,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				int comp, filter;
 				comp = getbyte(&bp); if (comp) return 0; //comp has to be 0 //TODO: Add error handling
 				filter = getbyte(&bp); if (filter) return 0; //filter has to be 0 //TODO: Add error handling
-				interlace = getbyte(&bp); if (interlace) /*(interlace>1)*/ return 0; //only 0 and 1 are valid interlaces, but only support 0 for now //TODO: Add error handling
+				interlace = getbyte(&bp); if (interlace) return 0; //only 0 and 1 are valid interlaces, but only support 0 //TODO: Add error handling
 				image->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0);
 				//* color	channels	1st ternary	2nd ternary
 				//*	0		1 gray		1			0
@@ -345,7 +340,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				image->colorarray = NULL;
 				image->colorarray = (uint8_t*) realloc(image->colorarray, image->width * image->height * image->channels);
 				
-				if (!createRGBAarray(image, image->scanlines, interlace)) return 0; //TODO: Add error handling
+				if (!createRGBAarray(image, image->scanlines)) return 0; //TODO: Add error handling
 
 				return 1;
 
@@ -379,8 +374,6 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 	*width = image.width;
 	*height = image.height;
 	*channels = image.channels;
-
-	// hexdump(buff, sizeof(buff));
 	
 	// return image;
 	return image.colorarray;
@@ -388,14 +381,14 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 
 
 int main() {
-	hexdumpPNG("images/2x2_filter03.png");
+	// hexdumpPNG("images/3x3_filter314.png");
 
     // PNG_data pngdata = openPNG("2x2_uncompressed.png");
 	int width, height, channels;
-    uint8_t *RGBAarray = openPNG("images/2x2_filter03.png", &width, &height, &channels);
+    uint8_t *RGBAarray = openPNG("images/oak_log_uncompressed.png", &width, &height, &channels);
     // uint8_t *RGBAarray = openPNG("oak_log_uncompressed.png", &width, &height, &channels);
 
-
+	// std::cout<< std::hex << (int)RGBAarray[31] <<std::endl;
 	drawRGBAarray(width, height, channels, RGBAarray);
 
 	// unsigned char* image = stbi_load("2x2_blue.png", &width, &height, &channels, 0);
