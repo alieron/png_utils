@@ -1,4 +1,6 @@
-## 2x2 Test image
+## 2x2 Example images
+Used in the examples in notes.md
+
 <img src="images/2x2_fixed_huffman.png" width="200"/>
 
 ### Hexdump of 2x2_uncompressed.png(BTYPE = 00) ✅
@@ -12,40 +14,6 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 000050: 4e 44 ae 42 60 82                                ND.B`.
 ```
 
-### Hexdump of 2x2_filter01.png(BTYPE=00) ✅
-! likely invalid checksum !
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
-000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
-000030: 00 00 00 00 ff 00 00 00 00 01 32 3c 39 ff 1d 52  ..........2<9..R
-000040: 81 00 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
-000050: 4e 44 ae 42 60 82                                ND.B`.
-```
-
-### Hexdump of 2x2_filter02.png(BTYPE=00) ✅
-! likely invalid checksum !
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
-000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
-000030: 00 00 00 00 ff 00 00 00 00 02 32 3c 39 00 4f 8e  ..........2<9.O.
-000040: ba ff 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
-000050: 4e 44 ae 42 60 82                                ND.B`.
-```
-
-### Hexdump of 2x2_filter03.png(BTYPE=00) ✅
-! likely invalid checksum !
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
-000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
-000030: 00 00 00 00 ff 00 00 00 00 03 32 3c 39 80 36 70  ..........2<9.6p
-000040: 9e bf 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
-000050: 4e 44 ae 42 60 82                                ND.B`.
-```
-TODO: 04, 3x
-
 ### Hexdump of 2x2_fixed_huffman.png(BTYPE = 01)
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
@@ -56,40 +24,7 @@ TODO: 04, 3x
 000050: 82                                               .
 ```
 
-## 2x2 Single Color Test image
-<img src="images/2x2_blue.png" width="200"/>
-
-### Hexdump of 2x2_blue_uncompressed.png(BTYPE = 00) ✅
-Generated with `pngcrush -force -m 1 -l 0 2x2_blue_filterdemo.png 2x2_blue_uncompressed.png`
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 02 00 00 00 fd d4 9a  ................
-000020: 73 00 00 00 19 49 44 41 54 08 1d 01 0e 00 f1 ff  s....IDAT.......
-000030: 00 15 13 e3 15 13 e3 00 15 13 e3 15 13 e3 1a 0a  ................
-000040: 04 2d 7a f8 96 54 00 00 00 00 49 45 4e 44 ae 42  .-z..T....IEND.B
-000050: 60 82                                            `.
-```
-
-### Hexdump of 2x2_blue_filter12.png(BTYPE=00) ✅
-! likely invalid checksum !
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
-000020: 24 00 00 00 1d 49 44 41 54 08 1d 01 12 00 ed ff  $....IDAT.......
-000030: 01 15 13 e3 ff 00 00 00 00 02 00 00 00 00 00 00  ................
-000040: 00 00 1c e2 05 3c fa 32 7c d3 00 00 00 00 49 45  .....<.2|.....IE
-000050: 4e 44 ae 42 60 82                                ND.B`.
-```
-
-### Hexdump of 2x2_blue.png(BTYPE = 01)
-Generated with `pngcrush -force -m 1 -l 1 2x2_blue_filterdemo.png 2x2_blue_.png`
-```
-000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
-000010: 00 00 00 02 00 00 00 02 08 02 00 00 00 fd d4 9a  ................
-000020: 73 00 00 00 10 49 44 41 54 08 d7 63 10 15 7e 0c  s....IDAT..c..~.
-000030: 44 0c 10 0a 00 1a 0a 04 2d 45 41 f2 b1 00 00 00  D.......-EA.....
-000040: 00 49 45 4e 44 ae 42 60 82                       .IEND.B`.
-```
+<img src="images/2x2_blue_filterdemo.png" width="200"/>
 
 ### Hexdump of 2x2_blue_filterdemo.png(BTYPE = 01)
 ```
@@ -100,7 +35,62 @@ Generated with `pngcrush -force -m 1 -l 1 2x2_blue_filterdemo.png 2x2_blue_.png`
 000040: 7e 48 df 00 00 00 00 49 45 4e 44 ae 42 60 82     ~H.....IEND.B`.
 ```
 
+## 3x3 Test Images 
+Used to test defiltering
+
+<img src="images/3x3_uncompressed.png" width="200"/>
+
+### Hexdump of 3x3_uncompressed.png(BTYPE = 00) ✅
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 03 00 00 00 03 08 06 00 00 00 56 28 b5  .............V(.
+000020: bf 00 00 00 32 49 44 41 54 08 1d 01 27 00 d8 ff  ....2IDAT...'...
+000030: 00 32 3c 39 ff 4f 8e ba ff 00 00 00 00 00 df 71  .2<9.O.........q
+000040: 26 ff ff ff ff ff 9b ad b7 ff 00 22 20 34 ff ac  &.........." 4..
+000050: 32 32 ff 22 20 34 ff 60 72 12 a5 cb c4 9d da 00  22." 4.`r.......
+000060: 00 00 00 49 45 4e 44 ae 42 60 82                 ...IEND.B`.
+```
+
+00 | 32 3c 39 ff | 4f 8e ba ff | 00 00 00 00
+00 | df 71 26 ff | ff ff ff ff | 9b ad b7 ff
+00 | 22 20 34 ff | ac 32 32 ff | 22 20 34 ff
+
+### Hexdump of 3x3_filter032.png(BTYPE = 00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 03 00 00 00 03 08 06 00 00 00 56 28 b5  .............V(.
+000020: bf 00 00 00 32 49 44 41 54 08 1d 01 27 00 d8 ff  ....2IDAT...'...
+000030: 00 32 3c 39 ff 4f 8e ba ff 00 00 00 00 03 c6 53  .2<9.O.........S
+000040: 0a 80 68 80 8f 00 1c 2e 38 80 02 43 af 0e 00 ad  ..h.....8..C....
+000050: 33 33 00 87 73 7d 00 60 72 12 a5 cb c4 9d da 00  33..s}.`r.......
+000060: 00 00 00 49 45 4e 44 ae 42 60 82                 ...IEND.B`.
+```
+
+00 | 32 3c 39 ff | 4f 8e ba ff | 00 00 00 00
+03 | c6 53 0a 80 | 68 80 8f 00 | 1c 2e 38 80    hex((x-((a+b)>>1) & 0xff) & 0xff)
+02 | 43 af 0e 00 | ad 33 33 00 | 87 73 7d 00    hex((x-b) & 0xff)
+
+### Hexdump of 3x3_filter314.png(BTYPE = 00) ✅
+! likely invalid checksum !
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 03 00 00 00 03 08 06 00 00 00 56 28 b5  .............V(.
+000020: bf 00 00 00 32 49 44 41 54 08 1d 01 27 00 d8 ff  ....2IDAT...'...
+000030: 03 32 3c 39 ff 36 70 9e 80 d9 b9 a3 81 01 df 71  .2<9.6p........q
+000040: 26 ff 20 8e d9 00 9c ae b8 00 04 43 af 0e 00 8a  &. ........C....
+000050: c1 33 00 87 ee 02 00 60 72 12 a5 cb c4 9d da 00  .3.....`r.......
+000060: 00 00 00 49 45 4e 44 ae 42 60 82                 ...IEND.B`.
+```
+
+03 | 32 3c 39 ff | 36 70 9e 80 | d9 b9 a3 81    hex((x-((a+0)>>1) & 0xff) & 0xff)
+01 | df 71 26 ff | 20 8e d9 00 | 9c ae b8 00    hex((x-a) & 0xff)
+04 | 43 af 0e 00 | 8a c1 33 00 | 87 ee 02 00    hex((x-(paeth_pdr(a,b,c) & 0xff)) & 0xff)
+
+
 ## 6x6 Dynamic Huffman Test Image
+Used to test dynamic huffman encoding
+
 <img src="images/6x6_dynamic_huffman.png" width="200"/>
 
 ### Hexdump of 6x6_dynamic_huffman.png(BTYPE = 10)
