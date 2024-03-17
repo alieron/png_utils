@@ -1,4 +1,18 @@
-def paeth(a,b,c):
+def up(x, b):
+    return hex((x-b) & 0xff)
+
+def sub(x, a):
+    return hex((x-a) & 0xff)
+
+def avg(x, a, b):
+    return hex((x-((a+b)>>1) & 0xff) & 0xff)
+
+def paeth(x, a, b, c):
+    return hex((x-(paeth_pdr(a,b,c) & 0xff)) & 0xff)
+
+# Use from filter imort * to use these functions in python env
+
+def paeth_pdr(a,b,c):
     p = a+b-c
 
     pa = abs(p-a)
@@ -47,11 +61,13 @@ def test(a,b,c):
 
 
 if __name__ == "__main__":
-    for a in range(256):
-        for b in range(256):
-            for c in range(256):
-                if paeth(a,b,c) != test(a,b,c):
-                # if paeth(a,b,c) != stb_paeth(a,b,c):
-                    print(a, ",", b, ",", c)
+    # for a in range(256):
+    #     for b in range(256):
+    #         for c in range(256):
+    #             if paeth_pdr(a,b,c) != test(a,b,c):
+    #             # if paeth_pdr(a,b,c) != stb_paeth(a,b,c):
+    #                 print(a, ",", b, ",", c)
 
-    print("None")
+    # print("None")
+
+    print(hex(0xff - paeth_pdr(0x00,0x00,0xff)))
