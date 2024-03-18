@@ -1,81 +1,3 @@
-### Drawing RGB Colors in Terminal using ANSI Codes
-
-Escape code for linux: `\x1b`
-
-Some terminals support 24-bit color, ie. you can set foreground and background colors using RGB.
-
-| ESC Code Sequence       | Description                  |
-| :---------------------- | :--------------------------- |
-| `ESC[38;2;{r};{g};{b}m` | Set foreground color as RGB. |
-| `ESC[48;2;{r};{g};{b}m` | Set background color as RGB. |
-
-```cpp
-#include <stdio.h>
-
-const int width = 16;
-const int height = 16;
-
-unsigned char img_RGBA[] = {95,74,43,255,76,61,38,255,95,74,43,255,116,90,54,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,116,90,54,255,76,61,38,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,95,74,43,255,76,61,38,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,175,143,85,255,194,157,98,255,175,143,85,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,76,61,38,255,95,74,43,255,184,148,95,255,126,98,55,255,126,98,55,255,150,116,65,255,150,116,65,255,159,132,77,255,150,116,65,255,159,132,77,255,159,132,77,255,159,132,77,255,159,132,77,255,150,116,65,255,150,116,65,255,194,157,98,255,95,74,43,255,95,74,43,255,184,148,95,255,126,98,55,255,194,157,98,255,194,157,98,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,175,143,85,255,150,116,65,255,184,148,95,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,76,61,38,255,184,148,95,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,150,116,65,255,159,132,77,255,159,132,77,255,150,116,65,255,150,116,65,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,126,98,55,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,159,132,77,255,159,132,77,255,175,143,85,255,159,132,77,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,159,132,77,255,150,116,65,255,175,143,85,255,150,116,65,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,95,74,43,255,76,61,38,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,159,132,77,255,175,143,85,255,175,143,85,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,175,143,85,255,150,116,65,255,184,148,95,255,175,143,85,255,150,116,65,255,150,116,65,255,126,98,55,255,150,116,65,255,159,132,77,255,159,132,77,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,95,74,43,255,76,61,38,255,184,148,95,255,159,132,77,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,194,157,98,255,184,148,95,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,184,148,95,255,159,132,77,255,150,116,65,255,159,132,77,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,175,143,85,255,184,148,95,255,175,143,85,255,175,143,85,255,194,157,98,255,175,143,85,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,116,90,54,255,76,61,38,255,95,74,43,255,95,74,43,255,76,61,38,255,116,90,54,255,95,74,43,255,95,74,43,255};
-
-
-void drawRGBAarray(int width, int height, int nchannels, unsigned char *img_RGBA){
-    for (int h=0; h<height; h++){
-        for (int w=0; w<width; w++){
-			    int index = nchannels*(h*width+w);
-
-            if (nchannels == 4 && !(img_RGBA[index+3])) {
-                printf("\x1b[0m ");
-            } else {
- 				        printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+1], (int)img_RGBA[index+2]);
-			      }
-        }
-        printf("\x1b[0m\n");
-    }
-}
-
-
-int main() {
-    drawRGBAarray(width, height, img_RGBA);
-}
-```
-
-### Hexdump of a file
-
-```cpp
-#include <stdio.h>
-
-void hexdump(void *ptr, int buflen) {
-	unsigned char *buf = (unsigned char*)ptr;
-	int i, j;
-	for (i=0; i<buflen; i+=16) {
-		printf("%06x: ", i);
-		for (j=0; j<16; j++) 
-		if (i+j < buflen)
-			printf("%02x ", buf[i+j]);
-		else
-			printf("   ");
-		printf(" ");
-		for (j=0; j<16; j++) 
-		if (i+j < buflen)
-			printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
-		printf("\n");
-	}
-}
-
-int main() {
-  FILE *fp = fopen("oak_log_top.png", "rb");
-      
-  fseek(fp, 0, SEEK_END); // Find EOF
-  int len = (int) ftell(fp); // Get current pos in the file
-  rewind(fp); // Back to beginning of file
-
-  char buff[len];
-  fread(buff, 1, len, fp); // Parse file into buff as len numbers of size 1 
-
-  hexdump(buff, sizeof(buff));
-}
-```
-
 ### 1. Decoding the PNG format
 Using [2x2_uncompressed.png](2x2_uncompressed.png) as the example unless specified
 
@@ -195,6 +117,21 @@ Taken from https://www.rfc-editor.org/rfc/rfc1951
 | 8    | 3          | 17-24    | 18   | 8          | 513-768  | 28   | 13         | 16385-24576 |
 | 9    | 3          | 25-32    | 19   | 8          | 769-1024 | 29   | 13         | 24577-32768 |
 
+#### Application of <distance,length> codes
+Using the compressed block from [2x2_blue.png](2x2_blue.png) for this example
+
+```
+63 10 15 7e 0c 44 0c 10 0a 00
+          | Reversing of byte order and turned to bits
+          V
+|0000|0000000|0|10100|0010000|00001100|01000|1000000|110001111|11000010|10100010|00001100|011
+|Skip|0->100 |0|5    |4->260 |30->0   |2    |1->257 |1e3->e3  |43->13  |45->15  |30->0   |
+             |dist=7 |len=6  |        |dist=3|len=3 |
+          |
+          V
+00 15 13 e3 <3,3>(15 13 e3) 00 <7,6>(15 13 e3 15 13 e3)
+            ^ back 3 copy 3    ^ back 7 copy 6
+```
 
 #### Fixed Huffman codes(BTYPE = 01)
 Using [2x2_fixed_huffman.png](2x2_fixed_huffman.png) for this example
@@ -213,6 +150,16 @@ The first byte in the compressed block(header byte) is moved to the right, and s
 
 The byte boundaries should be ignored and the bits can be read from right to left
 
+```
+Lit Value    Bits        Codes                  Codes(Hex)
+---------    ----        -----                  -----
+  0 - 143     8          00110000-10111111      30-bf
+144 - 255     9          110010000-111111111    190-1ff
+256 - 279     7          0000000-0010111        0-17
+280 - 287     8          11000000-11000111      c0-c7
+```
+
+The table above represents the default literal alphabet used to deflate fixed huffman codes
 
 ```
 |000000|00 00000|111 111111|01 0111011|0 1111101|1 1111110|1 11111111 |10010110 |00110110 |01000110| 00000|010 0000|0000 1100|1111 11111|000 01100|000 01100|000 01100|000 01100|011
@@ -227,31 +174,6 @@ Working from the rightmost bit, where `00001100` is read in reverse as `00110000
 
 Some codes are length codes, which in addition to extra trailing bits, may indicate the length of data to copy, the subsequent 5 bits indicate the backward distance to the data to copy
 
-```
-Lit Value    Bits        Codes                  Codes(Hex)
----------    ----        -----                  -----
-  0 - 143     8          00110000-10111111      30-bf
-144 - 255     9          110010000-111111111    190-1ff
-256 - 279     7          0000000-0010111        0-17
-280 - 287     8          11000000-11000111      c0-c7
-```
-
-#### Application of <distance,length> codes
-Using the compressed block from [2x2_blue.png](2x2_blue.png) for this example
-
-```
-63 10 15 7e 0c 44 0c 10 0a 00
-          | Reversing of byte order and turned to bits
-          V
-|0000|0000000|0|10100|0010000|00001100|01000|1000000|110001111|11000010|10100010|00001100|011
-|Skip|0->100 |0|5    |4->260 |30->0   |2    |1->257 |1e3->e3  |43->13  |45->15  |30->0   |
-             |dist=7 |len=6  |        |dist=3|len=3 |
-          |
-          V
-00 15 13 e3 <3,3>(15 13 e3) 00 <7,6>(15 13 e3 15 13 e3)
-            ^ back 3 copy 3    ^ back 7 copy 6
-```
-
 #### Dynamic Huffman codes(BTYPE=10)
 Using [6x6_dynamic_huffman.png](6x6_dynamic_huffman.png) for this example
 
@@ -261,20 +183,37 @@ Dynamic huffman codes are used in larger images, where it is more efficient then
 3d cc 21 0e 80 40 10 43 d1 4f 0d 57 d8 a4 87 41 73 05 ee 3f 62 15 7a 12 04 62 92 9a 9f 57 d3 e3 ba 1f 00 70 57 9d 76 97 dc 35 7b ba 17 8a 80 a9 a2 bd f8 5e 03 8a 52 45 b9
           | Reversing of byte order and turned to bits
           V
-1011100101000101010100101000101000000011010111101111100010111101101000101010100110000000100010100001011110111010011110110011010111011100100101110111011010011101010101110111000000000000000111111011101011100011110100110101011110011111100110101001001001100010000001000001001001111010000101010110001000111111111011100000010101110011010000011000011110100100110110000101011100001101010011111 
+1011100101000101010100101000101000000011010111101111100010111101101000101010100110000000100010100001011110111010011110110011010111011100100101110111011010011101010101110111000000000000000111111011101011100011110100110101011110011111100110101001001001100010000001000001001001111010000101010110001000111111111011100000010101110011010000011000011110100100110110000101011100001101010011111 | 10100010100001100010000010000001000000000001110001000011100110000111101 
+```
 
+The first chunk starting from the right most bit, containes information to build the huffman tree that encodes the literal and distance trees that encode the image data
+
+```
 |101|000|101|000|011|000|100|000|100|000|010|000|000|000|011|100|010|000|1110      |01100     |00111     |101
 |1  |14 |2  |13 |3  |12 |4  |11 |5  |10 |6  |9  |7  |8  |0  |18 |17 |16 |HCLEN=14+4|HDIST=12+1|HLIT=7+257|
-| <-                 HCLEN number of 3-bit segments                  -> |              
+| <-                 HCLEN number of 3-bit segments                  -> | 18       | 13       | 264     
               ^ These segments are read from left to right, unlike the rest of the compressed data
 ```
 
+        5 bits -> HLIT    - Number of literal/length codes - 257
+        5 bits -> HDIST   - Number of distance codes - 1
+        4 bits -> HCLEN   - Number of length codes used to encode the 1st huffman tree that was used to encode the literal and distance trees for the actual data - 4
+HCLEN x 3 bits -> nbits   - Number of bits for the 1st huffman tree, in the order:
+                            16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
 
-for (i=0; i < hclen; ++i) {
-      int s = stbi__zreceive(a,3);
-      codelength_sizes[length_dezigzag[i]] = (stbi_uc) s;
-   }
+```
+Deshuffling the length code nbits returns: { 3, 5, 5, 3, 4, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4 }
+    V
+Counting the number of each size: { 0, 0, 2, 2, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, maximum size 16bits
 
+firstcode   :{ 0, 0, 0, 4, 12, 30, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0, }
+firstsymbol :{ 0, 0, 0, 2, 4, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, }
+maxcode     :{ 0, 0, 32768, 49152, 61440, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, }
+next_code   :{ 0, 0, 2, 6, 15, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, }
+
+zsize       :{ 2, 2, 3, 3, 4, 4, 4, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, ...
+zvalue      :{ 6, 17, 0, 3, 4, 5, 18, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, ...
+```
 
 ### 3. Raw data to colorarray
 Using the raw data from [2x2_uncompressed.png](2x2_uncompressed.png) for this example
@@ -328,7 +267,7 @@ Reconstructed 2 |             | 32 3c 39 ff 4f 8e ba ff |
                                     1d(x) + 32(a) = 4f
 ```
 
-From [2x2_blue_filterdemo.png](2x2_blue_filterdemo.png)
+From [2x2_blue_filterdemo.png](2x2_blue_filterdemo.png) after deflate
 ```
                 | Filter Type | Colors RGB        |
 Scanline 1      | 01          | 15 13 e3 00 00 00 |
@@ -346,80 +285,6 @@ Reconstructed 2 |             | 15 13 e3 15 13 e3 |
 https://handmade.network/forums/articles/t/2822-tutorial_implementing_a_basic_png_reader_the_handmade_way
 
 
-```cpp
-// Returns the current value that pbuffer points to and increments pbuffer
-static inline uint8_t getbyte(uint8_t **pbuffer) {
-  return *((*pbuffer)++);
-}
-
-// Returns 4 consecutive bytes as an int, useful for getting 4 byte chunks
-static inline uint32_t get4bytes(uint8_t **pbuffer) {
-  return (uint32_t) (getbyte(pbuffer) << 24) + (getbyte(pbuffer) << 16) + (getbyte(pbuffer) << 8) + getbyte(pbuffer);
-}
-
-// Returns n consequtive bytes as an array of unsigned chars, useful for getting chunks of data
-static inline uint8_t *getnbytes(uint8_t **pbuffer, unsigned int n) {
-  uint8_t bytes[n];
-
-  int i;
-  for (i = 0; i < n ; ++i) 
-    bytes[i] = getbyte(pbuffer);
-  return bytes;
-}
-
-// Verifies that the first 8 bytes of the buffer corresponds to the png file signature
-static int validsignature(uint8_t **pbuffer) {
-  static const uint8_t png_sig[8] = { 137,80,78,71,13,10,26,10 };
-
-  int i = 0;
-  for (i = 0; i < 8; ++i) 
-    if (getbyte(pbuffer) != png_sig[i]) return 0; //TODO: Add error handling
-  return 1;
-}
-
-PNG_chunk_header getchunkheader(uint8_t **pbuffer) {
-  PNG_chunk_header chunk;
-  chunk.size = get4bytes(pbuffer);
-  chunk.type = get4bytes(pbuffer);
-  return chunk;
-}
-
-#define PNG_CHUNK_TYPE(a,b,c,d) (((unsigned) a << 24) + ((unsigned) b << 16) + ((unsigned) c << 8) + (unsigned) d)
-
-PNG_data *decodePNG(uint8_t *buffer, int length) {
-  uint8_t *bp = buffer;
-  PNG_data *data;
-  int first = 1;
-
-  if (!validsignature(&bp)) return 0;
-
-  for (;;) {
-    PNG_chunk_header chunk = getchunkheader(&bp);
-    switch(chunk.type) {
-      case PNG_CHUNK_TYPE('I','H','D','R'):
-        if (!first) return 0; //TODO: Add error handling
-        first = 0;
-        if (chunk.size != 13) return 0; //TODO: Add error handling
-        data->width = get4bytes(&bp);
-        data->height = get4bytes(&bp);
-        
-        break;
-
-      case PNG_CHUNK_TYPE('I','D','A','T'):
-        if (first) return 0; //TODO: Add error handling
-
-        break;
-
-      case PNG_CHUNK_TYPE('I','E','N','D'):
-        if (first) return 0; //TODO: Add error handling
-
-        break;
-    }
-  }
-  int z = get4bytes(&bp);
-
-  std::cout << z <<std::endl;
-```
 
 ```cpp
 data->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0)/*if color > 4 return 1 else 0*/;
@@ -434,10 +299,96 @@ data->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0)/*if color > 4 return 
 
 ### Interesting Bits
 
-```cpp
+```js
 (x & 1) gives 0 if x is even and 1 if x is odd
 
 (6 & 2) is bitwise and on 110 and 010 which returns 10
 (5 & 2) is bitwise and on 101 and 010 which returns 00
 
+(y & 1) and (~y & 1) give alternating 0 and 1 as y is incremented
+```
+
+### Drawing RGB Colors in Terminal using ANSI Codes
+
+Escape code for linux: `\x1b`
+
+Some terminals support 24-bit color, ie. you can set foreground and background colors using RGB.
+
+| ESC Code Sequence       | Description                  |
+| :---------------------- | :--------------------------- |
+| `ESC[38;2;{r};{g};{b}m` | Set foreground color as RGB. |
+| `ESC[48;2;{r};{g};{b}m` | Set background color as RGB. |
+
+```cpp
+#include <stdio.h>
+
+const int width = 16;
+const int height = 16;
+
+unsigned char img_RGBA[] = {95,74,43,255,76,61,38,255,95,74,43,255,116,90,54,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,116,90,54,255,76,61,38,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,95,74,43,255,76,61,38,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,175,143,85,255,194,157,98,255,175,143,85,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,76,61,38,255,95,74,43,255,184,148,95,255,126,98,55,255,126,98,55,255,150,116,65,255,150,116,65,255,159,132,77,255,150,116,65,255,159,132,77,255,159,132,77,255,159,132,77,255,159,132,77,255,150,116,65,255,150,116,65,255,194,157,98,255,95,74,43,255,95,74,43,255,184,148,95,255,126,98,55,255,194,157,98,255,194,157,98,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,175,143,85,255,150,116,65,255,184,148,95,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,76,61,38,255,184,148,95,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,150,116,65,255,159,132,77,255,159,132,77,255,150,116,65,255,150,116,65,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,126,98,55,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,159,132,77,255,159,132,77,255,175,143,85,255,159,132,77,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,159,132,77,255,150,116,65,255,175,143,85,255,150,116,65,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,95,74,43,255,76,61,38,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,150,116,65,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,159,132,77,255,175,143,85,255,175,143,85,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,175,143,85,255,150,116,65,255,184,148,95,255,175,143,85,255,150,116,65,255,150,116,65,255,126,98,55,255,150,116,65,255,159,132,77,255,159,132,77,255,175,143,85,255,184,148,95,255,159,132,77,255,175,143,85,255,95,74,43,255,95,74,43,255,175,143,85,255,159,132,77,255,184,148,95,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,175,143,85,255,184,148,95,255,150,116,65,255,175,143,85,255,95,74,43,255,76,61,38,255,184,148,95,255,159,132,77,255,184,148,95,255,184,148,95,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,184,148,95,255,194,157,98,255,184,148,95,255,150,116,65,255,175,143,85,255,76,61,38,255,95,74,43,255,184,148,95,255,159,132,77,255,150,116,65,255,159,132,77,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,150,116,65,255,184,148,95,255,95,74,43,255,95,74,43,255,184,148,95,255,184,148,95,255,184,148,95,255,175,143,85,255,175,143,85,255,184,148,95,255,175,143,85,255,175,143,85,255,194,157,98,255,175,143,85,255,175,143,85,255,184,148,95,255,184,148,95,255,184,148,95,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,95,74,43,255,76,61,38,255,95,74,43,255,95,74,43,255,116,90,54,255,76,61,38,255,95,74,43,255,95,74,43,255,76,61,38,255,116,90,54,255,95,74,43,255,95,74,43,255};
+
+
+void drawRGBAarray(int width, int height, int nchannels, unsigned char *img_RGBA){
+    for (int h=0; h<height; h++){
+        for (int w=0; w<width; w++){
+			int index = nchannels*(h*width+w);
+
+            if (nchannels == 4 && !(img_RGBA[index+3])) {
+                printf("\x1b[0m  ");
+            } else {
+ 				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+1], (int)img_RGBA[index+2]);
+			}
+        }
+        printf("\x1b[0m\n");
+    }
+}
+
+
+int main() {
+    drawRGBAarray(width, height, channels, RGBAarray);
+}
+```
+
+### Hexdump of a file
+
+```cpp
+#include <stdio.h>
+
+void hexdump(void *ptr, int buflen) {
+	unsigned char *buf = (unsigned char*)ptr;
+	int i, j;
+	for (i=0; i<buflen; i+=16) {
+		printf("%06x: ", i);
+		for (j=0; j<16; j++) 
+		if (i+j < buflen)
+			printf("%02x ", buf[i+j]);
+		else
+			printf("   ");
+		printf(" ");
+		for (j=0; j<16; j++) 
+		if (i+j < buflen)
+			printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
+		printf("\n");
+	}
+}
+void hexdumpfile(const char *filename) {
+	FILE *fp = fopen(filename, "rb");
+    
+    fseek(fp, 0, SEEK_END);
+    int len = (int) ftell(fp);
+    rewind(fp);
+
+	uint8_t buff[len];
+	
+    fread(buff, 1, len, fp);
+    fclose(fp);
+
+	hexdump(buff, sizeof(buff));
+
+	return;
+}
+
+int main() {
+  hexdumpfile("<path to file>");
+}
 ```
