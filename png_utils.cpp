@@ -206,9 +206,10 @@ static int paeth(int a, int b, int c) {
 
 // Writes the de-filtered scanlines to the image->colorarray
 static int createRGBAarray(PNG_data *image, uint8_t *scanlines) {
-	int bytes = (image->depth == 16 ? 2 : 1);//bytes per components
-	int bpl = image->channels * bytes * image->width;
-	int sep = image->channels * bytes;
+	// only support depth = 8
+	// int bytes = (image->depth == 16 ? 2 : 1);//bytes per components
+	int bpl = image->channels * image->width;
+	int sep = image->channels;
 
 	uint8_t *scan_buff = (uint8_t *) malloc(2 * bpl);
 	uint8_t first_line_filter[5] = { 0, 1, 0, 5, 1 }; // b and c = 0 for the first row, choose a more optimized filter
@@ -292,7 +293,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				image->width = get4bytes(&bp);
 				image->height = get4bytes(&bp);
 				if (image->width == 0 || image->height == 0) return 0; // 0 width or height is invalid //TODO: Add error handling
-				image->depth = getbyte(&bp); if (image->depth != 1 && image->depth != 2 && image->depth != 4 && image->depth != 8 && image->depth != 16) return 0; //TODO: Add error handling
+				image->depth = getbyte(&bp); if (/*image->depth != 1 && image->depth != 2 && image->depth != 4 &&*/ image->depth != 8 && image->depth != 16) return 0; // only support 8 for now, explore 16 later //TODO: Add error handling
 				color = getbyte(&bp); if (color != 2 && color != 6) return 0; //only RGB and RGBA are supported for this simple decoder //TODO: Add error handling
 				int comp, filter;
 				comp = getbyte(&bp); if (comp) return 0; //comp has to be 0 //TODO: Add error handling
