@@ -61,13 +61,20 @@ def test(a,b,c):
 
 
 if __name__ == "__main__":
-    # for a in range(256):
+    # range(256):
     #     for b in range(256):
     #         for c in range(256):
     #             if paeth_pdr(a,b,c) != test(a,b,c):
     #             # if paeth_pdr(a,b,c) != stb_paeth(a,b,c):
     #                 print(a, ",", b, ",", c)
+    import csv
+    with open('paeth_results.csv', 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(["a","b","c","paeth"])
+        for a in range(256):
+            for b in range(256):
+                for c in range(256):
+                    writer.writerow([a,b,c,paeth_pdr(a,b,c)])
 
-    # print("None")
+    print("Done")
 
-    print(hex(0xff - paeth_pdr(0x00,0x00,0xff)))
