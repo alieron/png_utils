@@ -1,7 +1,12 @@
 .vscode/
-
 __pycache__/
 
 bin/
+temp.cpp
 
 *.csv
+
+# STBI Testing
+compile_stbi
+run_stbi.cpp
+stb_image.h
