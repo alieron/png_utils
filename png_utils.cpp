@@ -1,13 +1,10 @@
-//Testing
-#include <iostream>
+#include <stdio.h>
+#include <ctype.h>
 
 #include <stdlib.h>
-// #include <string.h>
+#include <string.h>
 #include <stdint.h>
 
-// For Testing only
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 // Testing
 void hexdump(void *ptr, int buflen) {
@@ -110,7 +107,6 @@ static void skipnbytes(uint8_t **pbuffer, unsigned int n) {
 
 // Returns n consequtive bytes as an array of unsigned chars, useful for getting chunks of data
 static int getnbytes(uint8_t **pbuffer, uint8_t *bytes_out, int n) {
-	//TODO add a check and error handling for if the desired length exceeds the end of pbuffer
 	// no protection end of buffer is reached
 	memcpy(bytes_out, *pbuffer, n);
 	(*pbuffer) += n;
@@ -154,6 +150,7 @@ static uint32_t getzbits(zlib_stream *zstream, int n) {
 	return bits;
 }
 
+// Reverse 16 bits
 static uint16_t rev16bits(uint16_t n) {
 	n = ((n & 0xAAAA) >>  1) | ((n & 0x5555) << 1);
   	n = ((n & 0xCCCC) >>  2) | ((n & 0x3333) << 2);
@@ -162,15 +159,16 @@ static uint16_t rev16bits(uint16_t n) {
   	return n;
 }
 
+// Get n bits in reverse order
 static uint16_t revnbits(uint16_t val, int n) {
 	return rev16bits(val) >> (16 - n);
 }
 
+// Peak the next n bits in the bit buffer in reverse order
 static uint16_t peakzbitsrev(zlib_stream *zstream, int n) {
 	// replenish bits if not enough, up to 16 bits at least since its the max size of a code
 	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16);
 	return revnbits(zstream->bit_buffer & 0xffff, n);
-	// return zstream->bit_buffer & ((1<<n)-1);
 }
 
 // Check that the zstream header is valid
@@ -186,6 +184,7 @@ static int valid_zlib_header(uint8_t **zbuffer) {
 
 const int HUFF_LUT_MAX = 9; // to include all the lengths in the default alphabet + keep the LUT small, max = 12, to allow 4 bits for size
 
+// Generate the alphabets from a list of sizes
 static int gen_prefix_codes(huff_alphabet *alphabet, const uint8_t *code_sizes, int num_codes) {
 	int i, max_size = 0;
 	for (i = 0; i < num_codes; i++) {
@@ -248,6 +247,7 @@ static int gen_prefix_codes(huff_alphabet *alphabet, const uint8_t *code_sizes, 
 	return 1;
 }
 
+// Decode the current code against an alphabet if it exceeds the max size to be in the LUT
 static int decode_from_alphabet_non_lut(zlib_stream *zstream, huff_alphabet *alphabet) {
 	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16); // already done in parent function, but include incase not called from parent
 	int i, size;
@@ -266,6 +266,7 @@ static int decode_from_alphabet_non_lut(zlib_stream *zstream, huff_alphabet *alp
 	return -1; // cause and error, since we're not expecting a -ve value
 }
 
+// Decode the current code against an alphabet using an LUT
 static int decode_from_alphabet(zlib_stream *zstream, huff_alphabet *alphabet) {
 	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16);
 	int value, size;
@@ -296,6 +297,7 @@ static const uint8_t fixed_distance_sizes[32] ={
    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
 };
 
+// Calculate the literal and distance alphabets for zstream with dynamic huffman codes
 static int calculate_huffman_code(zlib_stream *zstream) {
 	int hlit  = getzbits(zstream, 5) + 257;
    	int hdist = getzbits(zstream, 5) + 1;
@@ -367,6 +369,7 @@ static const int z_dist_min[32] = { 1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,
 static const int z_dist_extra[32] =
 { 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 
+// Deflate the huffman block in the zstream using the literal and distance alphabets
 static int deflate_huffman_block(zlib_stream *zstream, uint8_t *scanlines) {
 	uint8_t *pout = scanlines;
 	for (;;) {
@@ -399,7 +402,6 @@ static int deflate_huffman_block(zlib_stream *zstream, uint8_t *scanlines) {
 	}
 	return 1;
 }
-
 
 // Computes the scanlines from the zstream
 static int decode_zlib_stream(zlib_stream *zstream, uint8_t *scanlines) {
@@ -614,9 +616,11 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
     return 1;
 }
 
+// Read the png
 uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
     FILE *fp = fopen(filename, "rb");
-    
+	// TODO: catch error if fopen is unable to open a file, keeps seg faulting for wtv reason
+
     fseek(fp, 0, SEEK_END);
     int len = (int) ftell(fp);
     rewind(fp);
@@ -629,7 +633,7 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 	PNG_data image;
 
 	if (!parsePNG(buff, &image)) {
-		image.colorarray = nullptr;
+		image.colorarray = NULL;
 	}
 	*width = image.width;
 	*height = image.height;
@@ -640,10 +644,11 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 
 
 int main() {
-	// hexdumpfile("images/3x3_filter314.png");
+	// hexdumpfile("images/3x3_graya.png");
 
 	int width, height, channels;
-    uint8_t *RGBAarray = openPNG("images/6x6_dynamic_huffman.png", &width, &height, &channels);
-    // uint8_t *RGBAarray = openPNG("images/oak_leaves.png", &width, &height, &channels);
+    uint8_t *RGBAarray = openPNG("images/3x3_gray.png", &width, &height, &channels);
+	if (RGBAarray == NULL) return -1; // catch error if any
+	
 	drawRGBAarray(width, height, channels, RGBAarray);   
 }
