@@ -282,9 +282,10 @@ Reconstructed 2 |             | 15 13 e3 15 13 e3 |
 
 
 ### Helpful resources
-https://handmade.network/forums/articles/t/2822-tutorial_implementing_a_basic_png_reader_the_handmade_way
-
-
+PNG Specification - https://www.w3.org/TR/png/
+RFC 1950, ZLIB Compressed Data Specification - https://www.rfc-editor.org/rfc/rfc1950
+RFC 1951, Deflate Compressed Data Specification - https://www.rfc-editor.org/rfc/rfc1951
+Basic PNG reader(Article) - https://handmade.network/forums/articles/t/2822-tutorial_implementing_a_basic_png_reader_the_handmade_way
 
 ```cpp
 data->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0)/*if color > 4 return 1 else 0*/;
