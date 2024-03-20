@@ -14,7 +14,7 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 000050: 4e 44 ae 42 60 82                                ND.B`.
 ```
 
-### Hexdump of 2x2_fixed_huffman.png (BTYPE = 01)
+### Hexdump of 2x2_fixed_huffman.png (BTYPE = 01) ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 02 00 00 00 02 08 06 00 00 00 72 b6 0d  .............r..
@@ -26,7 +26,7 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 
 <img src="images/2x2_blue_filterdemo.png" width="200"/>
 
-### Hexdump of 2x2_blue_filterdemo.png (BTYPE = 01)
+### Hexdump of 2x2_blue_filterdemo.png (BTYPE = 01) ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 02 00 00 00 02 08 02 00 00 00 fd d4 9a  ................
@@ -96,7 +96,7 @@ Used to test dynamic huffman encoding
 
 <img src="images/6x6_dynamic_huffman.png" width="200"/>
 
-### Hexdump of 6x6_dynamic_huffman.png (BTYPE = 10)
+### Hexdump of 6x6_dynamic_huffman.png (BTYPE = 10) ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 06 00 00 00 06 08 02 00 00 00 6f ae 78  .............o.x
@@ -109,7 +109,7 @@ Used to test dynamic huffman encoding
 ```
 
 
-## Oak log image
+## 16x16 images
 <img src="images/oak_log_top.png" width="200"/>
 
 ### Hexdump of oak_log_uncompressed.png (BTYPE = 00) ✅
@@ -187,8 +187,7 @@ Generated with `pngcrush -force -m 1 -l 0 oak_log_top.png oak_log_uncompressed.p
 000450: ae 42 60 82                                      .B`.
 ```
 
-### Hexdump of oak_log_top.png (BTYPE = 10)
-Generated with `pngcrush -force -m 1 -l 9 oak_log_top.png oak_log_uncompressed.png`
+### Hexdump of oak_log_top.png (BTYPE = 10) ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 10 00 00 00 10 08 06 00 00 00 1f f3 ff  ................
@@ -210,7 +209,9 @@ Generated with `pngcrush -force -m 1 -l 9 oak_log_top.png oak_log_uncompressed.p
 000110: 82                                               .
 ```
 
-### Hexdump of oak_leaves.png
+<img src="images/oak_leaves.png" width="200"/>
+
+### Hexdump of oak_leaves.png ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 10 00 00 00 10 08 06 00 00 00 1f f3 ff  ................

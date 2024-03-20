@@ -1,6 +1,6 @@
 # png_utils
 
-Simple png loader intended for loading simple images for minecraft texturepacks
+Simple png loader intended for loading simple images for minecraft texturepacks ![](images/oak_log_top.png)
 
 ## Supported features:
 
@@ -36,3 +36,9 @@ Simple png loader intended for loading simple images for minecraft texturepacks
 - [x] UP
 - [x] AVG
 - [x] PAETH (TODO: Optimize?)
+
+### Test cases:
+
+Passes for all cases defined in [hexdumps.md](hexdumps.md)
+
+
