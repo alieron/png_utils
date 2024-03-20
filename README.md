@@ -26,8 +26,8 @@ Simple png loader intended for loading simple images for minecraft texturepacks
 - ~~[ ] FDICT~~
 
 - [x] No Compression, BTYPE = 00
-- [ ] Fixed Huffman Codes, BTYPE = 01
-- [ ] Dynamic Huffman Codes, BTYPE = 10
+- [x] Fixed Huffman Codes, BTYPE = 01
+- [x] Dynamic Huffman Codes, BTYPE = 10
 
 ### Filter Methods:
 

@@ -1,6 +1,11 @@
+//Testing
 #include <iostream>
+
+#include <stdlib.h>
+// #include <string.h>
 #include <stdint.h>
 
+// For Testing only
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -22,7 +27,7 @@ void hexdump(void *ptr, int buflen) {
 		printf("\n");
 	}
 }
-void hexdumpPNG(const char *filename) {
+void hexdumpfile(const char *filename) {
 	FILE *fp = fopen(filename, "rb");
     
     fseek(fp, 0, SEEK_END);
@@ -49,8 +54,18 @@ typedef struct{
 } PNG_data;
 
 typedef struct{
+	uint16_t *lut;
+	uint8_t lut_max_size;
+
+	uint8_t *sizes;
+	uint16_t *values;
+	uint16_t num_codes;
+} huff_alphabet;
+
+typedef struct{
 	uint8_t *buffer;
 	uint32_t bit_buffer, nbits;
+	huff_alphabet lit_alphabet, dist_alphabet;
 } zlib_stream;
 
 typedef struct{
@@ -118,21 +133,43 @@ static void getchunkheader(uint8_t **pbuffer, PNG_chunk_header *chunk) {
 	chunk->type = get4bytes(pbuffer);
 }
 
-// Get last n bits from the right most byte in the zstream
+// Refills the bit buffer such that there are at least n bits of data in it
+static void refill_bit_buffer(zlib_stream *zstream, int n) {
+	do {
+		zstream->bit_buffer |= getbyte(&zstream->buffer) << zstream->nbits;
+		zstream->nbits += 8;
+	} while (zstream->nbits < n);
+}
+
+// Get last n bits(n <= 32) from the right most byte in the zstream
 static uint32_t getzbits(zlib_stream *zstream, int n) {
 	// not protected if the n supplied is more then 32
 	uint32_t bits;
-	if (zstream->nbits < n) {
-		// replenish bits if not enough, up to n bits max
-		do {
-			zstream->bit_buffer |= getbyte(&zstream->buffer) << zstream->nbits;
-			zstream->nbits += 8;
-		} while (zstream->nbits < n);
-	}
+	// replenish bits if not enough, up to n bits at least
+	if (zstream->nbits < n) refill_bit_buffer(zstream, n);
 	bits = zstream->bit_buffer & ((1 << n) - 1); //get the last n bits in the bit buffer
 	zstream->nbits -= n;
 	zstream->bit_buffer >>= n;
 	return bits;
+}
+
+static uint16_t rev16bits(uint16_t n) {
+	n = ((n & 0xAAAA) >>  1) | ((n & 0x5555) << 1);
+  	n = ((n & 0xCCCC) >>  2) | ((n & 0x3333) << 2);
+  	n = ((n & 0xF0F0) >>  4) | ((n & 0x0F0F) << 4);
+  	n = ((n & 0xFF00) >>  8) | ((n & 0x00FF) << 8);
+  	return n;
+}
+
+static uint16_t revnbits(uint16_t val, int n) {
+	return rev16bits(val) >> (16 - n);
+}
+
+static uint16_t peakzbitsrev(zlib_stream *zstream, int n) {
+	// replenish bits if not enough, up to 16 bits at least since its the max size of a code
+	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16);
+	return revnbits(zstream->bit_buffer & 0xffff, n);
+	// return zstream->bit_buffer & ((1<<n)-1);
 }
 
 // Check that the zstream header is valid
@@ -146,7 +183,7 @@ static int valid_zlib_header(uint8_t **zbuffer) {
 	return 1;
 }
 
-const int HUFF_LUT_MAX = 0; // to include all the lengths in the default alphabet + keep the LUT small, max = 12, to allow 4 bits for size
+const int HUFF_LUT_MAX = 9; // to include all the lengths in the default alphabet + keep the LUT small, max = 12, to allow 4 bits for size
 
 static int gen_prefix_codes(huff_alphabet *alphabet, const uint8_t *code_sizes, int num_codes) {
 	int i, max_size = 0;
@@ -308,22 +345,63 @@ static int calculate_huffman_code(zlib_stream *zstream) {
 		}
 	}
 
-	printf("{ ");
-	for (i=0; i < hlit+hdist; ++i) {
-		std::cout << std::hex << (int)zalphabet_sizes[i] <<", ";
-	}
-	printf("}\n");
-	return 0;
+	// printf("{ ");
+	// for (i=0; i < hlit+hdist; ++i) {
+	// 	std::cout << std::hex << (int)zalphabet_sizes[i] <<", ";
+	// }
+	// printf("}\n");
+	// return 0;
 
 	if (n != n_to_parse) return 0; // hlit or hdist was invalid, decoded sizes became larger than expected
 
 	// 3rd phase, generating the literal and distance alphabets for the image data
-	if (!gen_prefix_codes(zstream->lit_alphabet, zalphabet_sizes, hlit)) return 0; // generate literal alphabet
-	if (!gen_prefix_codes(zstream->dist_alphabet, zalphabet_sizes + hlit, hdist)) return 0; // generate literal alphabet
+	if (!gen_prefix_codes(&zstream->lit_alphabet, zalphabet_sizes, hlit)) return 0; // generate literal alphabet
+	if (!gen_prefix_codes(&zstream->dist_alphabet, zalphabet_sizes + hlit, hdist)) return 0; // generate literal alphabet
 	return 1;
 }
 
-static int deflate_huffman_block(zlib_stream *zstream) {
+static const int z_len_min[31] = {
+   3,4,5,6,7,8,9,10,11,13,
+   15,17,19,23,27,31,35,43,51,59,
+   67,83,99,115,131,163,195,227,258,0,0 };
+
+static const uint8_t z_len_extra[31]=
+{ 0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0 };
+
+static const int z_dist_min[32] = { 1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,
+257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577,0,0};
+
+static const int z_dist_extra[32] =
+{ 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
+
+static int deflate_huffman_block(zlib_stream *zstream, uint8_t *scanlines) {
+	uint8_t *pout = scanlines;
+	for (;;) {
+		int code = decode_from_alphabet(zstream, &zstream->lit_alphabet);
+		if (code < 0 || code > 285) return 0; // 286 and 287 are invalid code
+		if (code == 256) {
+			return 1;
+		} else if (code < 256) {
+			*pout++ = (uint8_t) code;
+		} else {
+			code -= 257;
+			// get length as well as any extra bits as necessary
+			int copy_len = z_len_min[code] + (z_len_extra[code] ? getzbits(zstream, z_len_extra[code]) : 0);
+			// get distance as well as any extra bits as necessary
+			code = decode_from_alphabet(zstream, &zstream->dist_alphabet);
+			if (code < 0 || code >> 30) return 0; // 31 and 32 are invalid codes
+			int dist = z_dist_min[code] + (z_dist_extra[code] ? getzbits(zstream, z_dist_extra[code]) : 0);
+			if (pout - scanlines < dist) return 0; // distance goes beyond the start of the data
+
+			uint8_t *copy_val = (uint8_t *) (pout - dist);
+			if (dist == 1) { // in PNG a single byte is usually copied multiple times
+				while (copy_len--) { *pout++ = *copy_val; }
+			} else {
+				// dist < length works here as well, as it will just begin copying itself
+				while (copy_len--) { *pout++ = *copy_val++; }
+			}
+		}
+	}
 	return 1;
 }
 
@@ -360,11 +438,16 @@ static int decode_zlib_stream(zlib_stream *zstream, uint8_t *scanlines) {
 			// std::cout <<  std::hex << get4bytes(&zstream->buffer) <<std::endl;
 		} else {
 			if (btype == 1) {
-				// parse fixed huffman
-		
+				// generate default literal and distance codes
+				if (!gen_prefix_codes(&zstream->lit_alphabet, fixed_lit_sizes, 288)) return 0; // generate literal alphabet
+				if (!gen_prefix_codes(&zstream->dist_alphabet, fixed_distance_sizes, 32)) return 0; // generate literal alphabet
+
 			} else {
-				//parse dynamic huffman
+				//parse dynamic huffman to generate literal and distance codes
+				if (!calculate_huffman_code(zstream)) return 0;
 			}
+			// parse the huffman blocks using the generated literal and distance codes
+			if (!deflate_huffman_block(zstream, out)) return 0;
 		}
 
 
@@ -516,12 +599,12 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				imglen = bpl * image->height;
 				
 				image->scanlines = NULL;
-				image->scanlines = (uint8_t*) realloc(image->scanlines, imglen);
+				image->scanlines = (uint8_t *) realloc(image->scanlines, imglen);
 				
 				if (!decode_zlib_stream(&zstream, image->scanlines)) return 0;
 
 				image->colorarray = NULL;
-				image->colorarray = (uint8_t*) realloc(image->colorarray, image->width * image->height * image->channels);
+				image->colorarray = (uint8_t *) realloc(image->colorarray, image->width * image->height * image->channels);
 				
 				if (!createRGBAarray(image, image->scanlines)) return 0; //TODO: Add error handling
 
@@ -536,7 +619,6 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
     return 1;
 }
 
-// PNG_data openPNG(const char *filename) {
 uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
     FILE *fp = fopen(filename, "rb");
     
@@ -558,23 +640,15 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 	*height = image.height;
 	*channels = image.channels;
 	
-	// return image;
 	return image.colorarray;
 }
 
 
 int main() {
-	// hexdumpPNG("images/3x3_filter314.png");
+	// hexdumpfile("images/3x3_filter314.png");
 
-    // PNG_data pngdata = openPNG("2x2_uncompressed.png");
 	int width, height, channels;
-    uint8_t *RGBAarray = openPNG("images/oak_log_uncompressed.png", &width, &height, &channels);
-    // uint8_t *RGBAarray = openPNG("oak_log_uncompressed.png", &width, &height, &channels);
-
-	// std::cout<< std::hex << (int)RGBAarray[31] <<std::endl;
-	drawRGBAarray(width, height, channels, RGBAarray);
-
-	// unsigned char* image = stbi_load("2x2_blue.png", &width, &height, &channels, 0);
-	// drawRGBAarray(width, height, channels, image);
-	// stbi_image_free(image);    
+    uint8_t *RGBAarray = openPNG("images/6x6_dynamic_huffman.png", &width, &height, &channels);
+    // uint8_t *RGBAarray = openPNG("images/oak_leaves.png", &width, &height, &channels);
+	drawRGBAarray(width, height, channels, RGBAarray);   
 }
