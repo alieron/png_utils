@@ -146,6 +146,188 @@ static int valid_zlib_header(uint8_t **zbuffer) {
 	return 1;
 }
 
+const int HUFF_LUT_MAX = 0; // to include all the lengths in the default alphabet + keep the LUT small, max = 12, to allow 4 bits for size
+
+static int gen_prefix_codes(huff_alphabet *alphabet, const uint8_t *code_sizes, int num_codes) {
+	int i, max_size = 0;
+	for (i = 0; i < num_codes; i++) {
+		// getting the max size of the current code
+		if (max_size < code_sizes[i]) max_size = code_sizes[i];
+	}
+	if (max_size > 16) return 0; // 1-16 max num of bits in a code is 16
+	
+	int size_count[max_size + 1];
+	memset(size_count, 0, sizeof(size_count));
+	for (i = 0; i < num_codes; i++) {
+		// get the code_count, how many times a code of a certain size occurs
+		size_count[code_sizes[i]]++;
+	}
+	size_count[0] = 0;
+	for (i = 1; i <= max_size; i++) {
+		if (size_count[i] > (1 << i)) return 0; // count shouldn't exceed the value i number of bits can represent
+	}
+	
+	// set the starting codes for each code size
+	uint16_t next_code[max_size + 1];
+	int code = 0;
+	for (i = 1; i <= max_size; i++) {
+		code = (code + size_count[i-1]) << 1;
+		if (size_count[i] > 0) next_code[i] = code;
+	}
+
+	alphabet->lut_max_size = max_size < HUFF_LUT_MAX ? max_size : HUFF_LUT_MAX; // max size of codes in the lut, capped at 9
+	alphabet->lut = NULL;
+	alphabet->lut = (uint16_t *) realloc(alphabet->lut, sizeof(uint16_t) * (1 << alphabet->lut_max_size));
+	memset(alphabet->lut, 0, sizeof(alphabet->lut));
+
+	alphabet->num_codes = num_codes;
+	alphabet->values = NULL;
+	alphabet->values = (uint16_t *) realloc(alphabet->values, sizeof(uint16_t) * num_codes);
+	memset(alphabet->values, 0, sizeof(alphabet->values));
+	alphabet->sizes = NULL;
+	alphabet->sizes = (uint8_t *) realloc(alphabet->sizes, num_codes);
+	memset(alphabet->sizes, 0, num_codes);
+
+	for (i = 0; i < num_codes; i++) { // i is the current symbol we are coding for
+		int size = code_sizes[i];
+		if (size) {
+			// non LUT stuff
+			alphabet->values[i] = next_code[size];
+			alphabet->sizes[i] = size;
+
+			// LUT stuff
+			if (size <= HUFF_LUT_MAX) {
+				int current_prefix = revnbits(next_code[size], size);
+				uint16_t value = (uint16_t) ((size << HUFF_LUT_MAX) | i); // pack size into the leftmost 7 bits of symbol, for decoding later
+				while (current_prefix < (1 << alphabet->lut_max_size)) {
+					alphabet->lut[current_prefix] = value;
+					current_prefix += (1 << size);
+				}
+			}
+			next_code[size]++;
+		}
+	}
+	return 1;
+}
+
+static int decode_from_alphabet_non_lut(zlib_stream *zstream, huff_alphabet *alphabet) {
+	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16); // already done in parent function, but include incase not called from parent
+	int i, size;
+	// test each symbol in the alphabet to find the value the code refers to
+	for (i = 0; i < alphabet->num_codes; i++) {
+		size = alphabet->sizes[i];
+		if (size) {
+			uint16_t code = peakzbitsrev(zstream, size);
+			if (alphabet->values[i] == code) {
+				zstream->nbits -= size;
+				zstream->bit_buffer >>= size;
+				return i;
+			}
+		}
+	}
+	return -1; // cause and error, since we're not expecting a -ve value
+}
+
+static int decode_from_alphabet(zlib_stream *zstream, huff_alphabet *alphabet) {
+	if (zstream->nbits < 16) refill_bit_buffer(zstream, 16);
+	int value, size;
+
+	value = alphabet->lut[zstream->bit_buffer & ((1 << alphabet->lut_max_size) - 1)];
+	if (value) { // any codes longer then 9 will have symbol = 0
+		size = value >> HUFF_LUT_MAX; // size is stored as the left most 7 bits of symbol in the lut
+		zstream->nbits -= size;
+		zstream->bit_buffer >>= size;
+		return value & ((1 << HUFF_LUT_MAX) -1);
+	}
+	return decode_from_alphabet_non_lut(zstream, alphabet);
+}
+
+static const uint8_t fixed_lit_sizes[288] = {
+   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+   9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+   9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+   9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, 7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+};
+
+static const uint8_t fixed_distance_sizes[32] ={
+   5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
+};
+
+static int calculate_huffman_code(zlib_stream *zstream) {
+	int hlit  = getzbits(zstream, 5) + 257;
+   	int hdist = getzbits(zstream, 5) + 1;
+   	int hclen = getzbits(zstream, 4) + 4;
+	
+	// 1st phase, generate the codelength_alphabet that decodes codelengths for the literal and distances trees
+	static const uint8_t length_order[19] = { 16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15 };
+	uint8_t codelength_alphabet_sizes[19];
+	memset(codelength_alphabet_sizes, 0, 19);
+	
+	int i;
+	for (i = 0; i < hclen; i++) {
+		codelength_alphabet_sizes[length_order[i]] = (uint8_t) getzbits(zstream, 3);
+	}
+	
+	huff_alphabet codelength_alphabet;
+	if (!gen_prefix_codes(&codelength_alphabet, codelength_alphabet_sizes, 19)) return 0;
+	// uint8_t zalphabet_sizes[288+32+138]; // max n of lit + max n of dist + max repitition
+	// uint8_t zalphabet_sizes[288+32]; // max n of lit + max n of dist 
+	// memset(zalphabet_sizes, 0, 288 + 32);
+	uint8_t zalphabet_sizes[hlit+hdist]; // keep static or be dynamic?
+
+	int n_to_parse = hlit + hdist;
+	int n = 0;
+
+	// 2nd phase, using the codelength_alphabet to decode codelengths
+	while (n < n_to_parse) {
+		int code = decode_from_alphabet(zstream, &codelength_alphabet);
+		if (code < 0 || code > 18) return 0; // out of range of the codelength alphabet
+		if (code < 16) {
+			zalphabet_sizes[n] = (uint8_t) code;
+			n++;
+		} else {
+			int copy_len;
+			uint8_t copy_val = 0;
+			if (code == 16) {
+				if (n == 0) return 0; // cannot copy previous codelength if its the first
+				copy_len = getzbits(zstream, 2) + 3; // 3-6
+				copy_val = zalphabet_sizes[n-1];
+			} else if (code == 17) {
+				copy_len = getzbits(zstream, 3) + 3; // 3-10
+			} else if (code == 18) {
+				copy_len = getzbits(zstream, 7) + 11; // 11-138
+			} else return 0; // technically redundant since we check if > 18 above
+			
+			memset(zalphabet_sizes + n, copy_val, copy_len);
+			n += copy_len;
+		}
+	}
+
+	printf("{ ");
+	for (i=0; i < hlit+hdist; ++i) {
+		std::cout << std::hex << (int)zalphabet_sizes[i] <<", ";
+	}
+	printf("}\n");
+	return 0;
+
+	if (n != n_to_parse) return 0; // hlit or hdist was invalid, decoded sizes became larger than expected
+
+	// 3rd phase, generating the literal and distance alphabets for the image data
+	if (!gen_prefix_codes(zstream->lit_alphabet, zalphabet_sizes, hlit)) return 0; // generate literal alphabet
+	if (!gen_prefix_codes(zstream->dist_alphabet, zalphabet_sizes + hlit, hdist)) return 0; // generate literal alphabet
+	return 1;
+}
+
+static int deflate_huffman_block(zlib_stream *zstream) {
+	return 1;
+}
+
+
 // Computes the scanlines from the zstream
 static int decode_zlib_stream(zlib_stream *zstream, uint8_t *scanlines) {
 	if (!valid_zlib_header(&zstream->buffer)) return 0;
