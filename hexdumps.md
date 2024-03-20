@@ -36,7 +36,7 @@ Generated with `pngcrush -force -m 1 -l 0 2x2_fixed_huffman.png 2x2_uncompressed
 ```
 
 ## 3x3 Test Images 
-Used to test defiltering
+Used to test defiltering/grayscale color types
 
 <img src="images/3x3_uncompressed.png" width="200"/>
 
@@ -89,6 +89,30 @@ FIL|  R  G  B  A |  R  G  B  A |  R  G  B  A
 03 | 32 3c 39 ff | 36 70 9e 80 | d9 b9 a3 81    hex((x-((a+0)>>1) & 0xff) & 0xff)
 01 | df 71 26 ff | 20 8e d9 00 | 9c ae b8 00    hex((x-a) & 0xff)
 04 | 43 af 0e 00 | 8a c1 33 00 | 87 ee 02 00    hex((x-(paeth_pdr(a,b,c) & 0xff)) & 0xff)
+```
+
+<img src="images/3x3_gray.png" width="200"/>
+
+### Hexdump of 3x3_gray.png (Color = 0, grayscale)
+Using `pngcrush -c` to alter the color value
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 03 00 00 00 03 08 00 00 00 00 73 43 ea  .............sC.
+000020: 63 00 00 00 14 49 44 41 54 08 5b 63 e8 e6 c9 61  c....IDAT.[c...a
+000030: 50 09 56 67 58 6a f6 0c 00 11 3b 03 63 cd 49 a6  P.VgXj....;.c.I.
+000040: 38 00 00 00 00 49 45 4e 44 ae 42 60 82           8....IEND.B`.
+```
+
+<img src="images/3x3_graya.png" width="200"/>
+
+### Hexdump of 3x3_graya.png (Color = 6, grayscale + a)
+```
+000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
+000010: 00 00 00 03 00 00 00 03 08 04 00 00 00 fc 21 7d  ..............!}
+000020: 34 00 00 00 1e 49 44 41 54 08 5b 63 e8 fe cf f3  4....IDAT.[c....
+000030: 3f e7 3f 83 ca 7f 06 06 f5 ff 0c 4b ff 9b fd 7f  ?.?........K....
+000040: f6 1f 00 6b ee 0b 08 ce 15 e9 64 00 00 00 00 49  ...k......d....I
+000050: 45 4e 44 ae 42 60 82                             END.B`.
 ```
 
 ## 6x6 Dynamic Huffman Test Image
