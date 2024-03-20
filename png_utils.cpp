@@ -143,6 +143,7 @@ static void refill_bit_buffer(zlib_stream *zstream, int n) {
 
 // Get last n bits(n <= 32) from the right most byte in the zstream
 static uint32_t getzbits(zlib_stream *zstream, int n) {
+	if (n == 0) return 0;
 	// not protected if the n supplied is more then 32
 	uint32_t bits;
 	// replenish bits if not enough, up to n bits at least
@@ -344,14 +345,6 @@ static int calculate_huffman_code(zlib_stream *zstream) {
 			n += copy_len;
 		}
 	}
-
-	// printf("{ ");
-	// for (i=0; i < hlit+hdist; ++i) {
-	// 	std::cout << std::hex << (int)zalphabet_sizes[i] <<", ";
-	// }
-	// printf("}\n");
-	// return 0;
-
 	if (n != n_to_parse) return 0; // hlit or hdist was invalid, decoded sizes became larger than expected
 
 	// 3rd phase, generating the literal and distance alphabets for the image data
@@ -386,11 +379,13 @@ static int deflate_huffman_block(zlib_stream *zstream, uint8_t *scanlines) {
 		} else {
 			code -= 257;
 			// get length as well as any extra bits as necessary
-			int copy_len = z_len_min[code] + (z_len_extra[code] ? getzbits(zstream, z_len_extra[code]) : 0);
+			int copy_len = z_len_min[code] + getzbits(zstream, z_len_extra[code]);
+			
 			// get distance as well as any extra bits as necessary
 			code = decode_from_alphabet(zstream, &zstream->dist_alphabet);
 			if (code < 0 || code >> 30) return 0; // 31 and 32 are invalid codes
-			int dist = z_dist_min[code] + (z_dist_extra[code] ? getzbits(zstream, z_dist_extra[code]) : 0);
+			int dist = z_dist_min[code] + getzbits(zstream, z_dist_extra[code]);
+
 			if (pout - scanlines < dist) return 0; // distance goes beyond the start of the data
 
 			uint8_t *copy_val = (uint8_t *) (pout - dist);
