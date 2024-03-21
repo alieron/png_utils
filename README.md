@@ -16,7 +16,7 @@ Simple png loader intended for loading simple images for minecraft texturepacks 
 ### Img Properties:
 
 - Depth = 8 only (Might explore 16bit depth later)
-- Color = RGBA, RGB (TODO: Grayscale Support)
+- Color = RGBA, RGB, grayscale and grayscale+A
 - Comp = 0 only, as in specification
 - Filter = 0 only, as in specification
 - Interlace = 0 only (No reason to support ADAM7 interlace)
