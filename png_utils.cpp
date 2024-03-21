@@ -72,16 +72,16 @@ typedef struct{
 
 #define CHUNK_TYPE(a,b,c,d) (((unsigned) a << 24) + ((unsigned) b << 16) + ((unsigned) c << 8) + (unsigned) d)
 
-// Draws the colorarray in the terminal via ANSI ESC codes, works with RGB and RGBA only
+// Draws the colorarray in the terminal via ANSI ESC codes, works with grayscale, grayscaleA, RGB and RGBA
 void drawRGBAarray(int width, int height, int nchannels, unsigned char *img_RGBA){
     for (int h=0; h<height; h++){
         for (int w=0; w<width; w++){
 			int index = nchannels*(h*width+w);
-
-            if (nchannels == 4 && !(img_RGBA[index+3])) {
+			
+            if ((~nchannels & 1) && !(img_RGBA[index+(nchannels-1)])) {
                 printf("\x1b[0m  ");
             } else {
- 				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+1], (int)img_RGBA[index+2]);
+ 				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+(nchannels/3)], (int)img_RGBA[index+2*(nchannels/3)]);
 			}
         }
         printf("\x1b[0m\n");
@@ -556,7 +556,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				image->height = get4bytes(&bp);
 				if (image->width == 0 || image->height == 0) return 0; // 0 width or height is invalid //TODO: Add error handling
 				image->depth = getbyte(&bp); if (/*image->depth != 1 && image->depth != 2 && image->depth != 4 &&*/ image->depth != 8 && image->depth != 16) return 0; // only support 8 for now, explore 16 later //TODO: Add error handling
-				color = getbyte(&bp); if (color != 2 && color != 6) return 0; //only RGB and RGBA are supported for this simple decoder //TODO: Add error handling
+				color = getbyte(&bp); if (color != 0 && color != 2 && color != 4 && color != 6) return 0; //only RGB and RGBA are supported for this simple decoder //TODO: Add error handling
 				int comp, filter;
 				comp = getbyte(&bp); if (comp) return 0; //comp has to be 0 //TODO: Add error handling
 				filter = getbyte(&bp); if (filter) return 0; //filter has to be 0 //TODO: Add error handling

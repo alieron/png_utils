@@ -93,7 +93,7 @@ FIL|  R  G  B  A |  R  G  B  A |  R  G  B  A
 
 <img src="images/3x3_gray.png" width="200"/>
 
-### Hexdump of 3x3_gray.png (Color = 0, grayscale)
+### Hexdump of 3x3_gray.png (Color = 0, grayscale) ✅
 Using `pngcrush -c` to alter the color value
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
@@ -105,7 +105,7 @@ Using `pngcrush -c` to alter the color value
 
 <img src="images/3x3_graya.png" width="200"/>
 
-### Hexdump of 3x3_graya.png (Color = 6, grayscale + a)
+### Hexdump of 3x3_graya.png (Color = 6, grayscale + a) ✅
 ```
 000000: 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52  .PNG........IHDR
 000010: 00 00 00 03 00 00 00 03 08 04 00 00 00 fc 21 7d  ..............!}
