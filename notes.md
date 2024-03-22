@@ -53,7 +53,7 @@ LZ77 window size = `2^(CINFO + 8)` or `1 << (CINFO + 8)`
 
 `FCHECK` is set such that `CMF*256 + FLG % 31 = 0`
 
-There's only one zlib header, but there can me several blocks of compressed data
+There's only one zlib header, but there can be several blocks of compressed data
 
 #### Data Block
 See https://www.rfc-editor.org/rfc/rfc1951 for DEFLATE compressed data format
@@ -88,6 +88,10 @@ These codes are used by both fixed and dynamic huffman encoding
 
 Taken from https://www.rfc-editor.org/rfc/rfc1951
 
+##### Literal Table
+0-255 represent actual byte values
+256   represents the end of the data
+
 ##### Length Table
 | Code | Extra Bits | Lengths | Code | Extra Bits | Lengths | Code | Extra Bits | Lengths |
 |------|------------|---------|------|------------|---------|------|------------|---------|
@@ -103,7 +107,7 @@ Taken from https://www.rfc-editor.org/rfc/rfc1951
 | 266  | 1          | 13,14   | 276  | 3          | 59-66   |      |            |         |
 
 
-##### Distamce Table
+##### Distance Table
 | Code | Extra Bits | Distance | Code | Extra Bits | Distance | Code | Extra Bits | Distance    |
 |------|------------|----------|------|------------|----------|------|------------|-------------|
 | 0    | 0          | 1        | 10   | 4          | 33-48    | 20   | 9          | 1025-1536   |
@@ -117,6 +121,42 @@ Taken from https://www.rfc-editor.org/rfc/rfc1951
 | 8    | 3          | 17-24    | 18   | 8          | 513-768  | 28   | 13         | 16385-24576 |
 | 9    | 3          | 25-32    | 19   | 8          | 769-1024 | 29   | 13         | 24577-32768 |
 
+#### Prefix Codes
+A code where no codeword is not a prefix of another codeword, so that the shortest stream of data that matches a codeword will refer to only that codeword
+
+A code alphabet can be generated from the codelengths of the alphabet, ie. a list of the size/number of bits for a corresponding codeword
+
+Using the huffman alphabet codelengths [6x6_dynamic_huffman.png](6x6_dynamic_huffman.png) for this example
+
+This is done by generating a first code for the first codeword of each size and incrementing the code for each subsequent codeword of the same size
+
+The first code for the next size is the last code of the previous size bit shifted left by 1
+
+```
+Codeword            ->   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18        Codelength alphabet has codewords 0-18
+Sizes[Codeword]     -> { 3, 5, 5, 3, 4, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4 }      Only sizes 2, 3, 4, 5 are used
+    |
+    | counting how many times each size occurs
+    V
+Sizes               ->   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16              Max size is 16-bits
+Size Count[Sizes]   -> { 0, 0, 2, 2, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }            Number of time each code size occurs
+    |
+    | calculating the first code for each size
+    V
+Sizes               ->        2         3         4         5       First Code is not generated for               
+First Code[Sizes]   -> 00000000  00000100  00001100  00011110       In binary, the prefixes of longer codes do not match any shorter codes
+                    ->       00        04        0c        1e       Hexadecimal representation
+    |
+    | incrementing the code for any subsequent codeword for each size
+    V
+Codeword            ->    0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
+Sizes[Codeword]     -> {  3,  5,  5,  3,  4,  4,  2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  2,  4 }
+Code[Codeword]      -> { 04, 1e, 1f, 05, 0c, 0d, 00,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _, 01, 0e } 
+                                                      ^  _ Are the codewords we do not expect to find in the data
+```
+
+Subsequently, the data can be parse bit by bit, till a matching code is found and translated into its codeword
+
 #### Application of <distance,length> codes
 Using the compressed block from [2x2_blue.png](2x2_blue.png) for this example
 
@@ -125,7 +165,7 @@ Using the compressed block from [2x2_blue.png](2x2_blue.png) for this example
           | Reversing of byte order and turned to bits
           V
 |0000|0000000|0|10100|0010000|00001100|01000|1000000|110001111|11000010|10100010|00001100|011
-|Skip|0->100 |0|5    |4->260 |30->0   |2    |1->257 |1e3->e3  |43->13  |45->15  |30->0   |
+|Skip|0->256 |0|5    |4->260 |30->0   |2    |1->257 |1e3->e3  |43->13  |45->15  |30->0   |
              |dist=7 |len=6  |        |dist=3|len=3 |
           |
           V
@@ -159,7 +199,7 @@ Lit Value    Bits        Codes                  Codes(Hex)
 280 - 287     8          11000000-11000111      c0-c7
 ```
 
-The table above represents the default literal alphabet used to deflate fixed huffman codes
+The table above represents the default literal alphabet used to deflate fixed huffman codes, which can be generated from the codelengths for the alphabet, as in [Prefix Codes](#prefix-codes)
 
 ```
 |000000|00 00000|111 111111|01 0111011|0 1111101|1 1111110|1 11111111 |10010110 |00110110 |01000110| 00000|010 0000|0000 1100|1111 11111|000 01100|000 01100|000 01100|000 01100|011
@@ -183,7 +223,7 @@ Dynamic huffman codes are used in larger images, where it is more efficient then
 3d cc 21 0e 80 40 10 43 d1 4f 0d 57 d8 a4 87 41 73 05 ee 3f 62 15 7a 12 04 62 92 9a 9f 57 d3 e3 ba 1f 00 70 57 9d 76 97 dc 35 7b ba 17 8a 80 a9 a2 bd f8 5e 03 8a 52 45 b9
           | Reversing of byte order and turned to bits
           V
-1011100101000101010100101000101000000011010111101111100010111101101000101010100110000000100010100001011110111010011110110011010111011100100101110111011010011101010101110111000000000000000111111011101011100011110100110101011110011111100110101001001001100010000001000001001001111010000101010110001000111111111011100000010101110011010000011000011110100100110110000101011100001101010011111 | 10100010100001100010000010000001000000000001110001000011100110000111101 
+10111001010001010101001010001010000000110101111011111000101111011010001010101001100000001000101000010111101110100111101100110101110111001001011101110110100111010101011101110000000000000001111110111010111000111 | 101|001|10|101|01111|001|11111|001|10 | 101001001001100010000001000001001001111010000101010110001000111111111011100000010101110011010000011000011110100100110110000101011100001101010011111 | 1010001010000110001000001000000100000000000111000100001 | 1100110000111 | 101 
 ```
 
 The first chunk starting from the right most bit, containes information to build the huffman tree that encodes the literal and distance trees that encode the image data
@@ -195,25 +235,46 @@ The first chunk starting from the right most bit, containes information to build
               ^ These segments are read from left to right, unlike the rest of the compressed data
 ```
 
-        5 bits -> HLIT    - Number of literal/length codes - 257
-        5 bits -> HDIST   - Number of distance codes - 1
+        5 bits -> HLIT    - Number of literal/length alphabet codes - 257
+        5 bits -> HDIST   - Number of distance alphabet codes - 1
         4 bits -> HCLEN   - Number of length codes used to encode the 1st huffman tree that was used to encode the literal and distance trees for the actual data - 4
 HCLEN x 3 bits -> nbits   - Number of bits for the 1st huffman tree, in the order:
                             16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
 
+Generating the alphabet to decode the literal and distance alphabets:
 ```
 Deshuffling the length code nbits returns: { 3, 5, 5, 3, 4, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4 }
     V
-Counting the number of each size: { 0, 0, 2, 2, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, maximum size 16bits
-
-firstcode   :{ 0, 0, 0, 4, 12, 30, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0, }
-firstsymbol :{ 0, 0, 0, 2, 4, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, }
-maxcode     :{ 0, 0, 32768, 49152, 61440, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, }
-next_code   :{ 0, 0, 2, 6, 15, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, }
-
-zsize       :{ 2, 2, 3, 3, 4, 4, 4, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, ...
-zvalue      :{ 6, 17, 0, 3, 4, 5, 18, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, ...
+Codeword            ->  0   1   2   3   4   5   6  17  18
+Code[Codeword]      -> 04, 1e, 1f, 05, 0c, 0d, 00, 01, 0e
 ```
+0 - 15: Represent codelengths of 0 - 15
+    16: Copy the previous codelength n times, where n = next 2 bits + 3 (0 = 3, ... , 3 = 6)              
+    17: Repeat codelength 0 n times, where n = next 3 bits + 3 (0 = 3, ... , 7 = 10)
+    18: Repeat codelength 0 n times, where n = next 7 bits +11 (0 = 11, ... , 0x7f/127 = 138)
+
+Using the decoded alphabet and the code table above, the next chunk of the data can be decoded into the list of codelengths for the literal and distance codes
+We expect to find 264 codelengths for the literal alphabet and 13 for distance
+
+```
+264 Literal alphabet codelengths
+|101   |001   |001   |0011  |000   |10     |00    |000   |10     |00    |001   |001   |0011  |110   |10     |00    |010   |10     |1011  |000   |10     |0011  |1111111  |0111   |00    |0000101|0111   |00    |110   |10     |00    |0011000 |0111   |101   |001   |001   |1011  |0000101|0111   |00    |001   |10     |101   |00    |11111
+|05->3 |04->0 |04->0 |0c->4 |n=0+3 |01->17 |00->6 |n=0+3 |01->17 |00->6 |04->0 |04->0 |0c->4 |n=6+3 |01->17 |00->6 |n=2+3 |01->17 |0d->5 |n=0+3 |01->17 |0c->4 |n=127+11 |0e->18 |00->6 |n=5+11 |0e->18 |00->6 |n=6+3 |01->17 |00->6 |n=24+11 |0e->18 |05->3 |04->0 |04->0 |0d->5 |n=5+11 |0e->18 |00->6 |n=1+3 |01->17 |05->3 |00->6 |1f->2
+
+Codeword            ->   0  1  2  3  4  5  6  7      256 257 258 259 260 261 262 263            264 Codewords
+Sizes[Codeword]     -> { 2, 6, 3, 0, 0, 0, 0, 6, ... , 6,  0,  0,  0,  4,  0,  0,  3, }
+
+13 Distance alphabet codelengths
+|101   |001   |10     |101   |01111 |001   |11111 |001   |10
+|05->3 |n=1+3 |01->17 |05->3 |1e->1 |04->0 |1f->2 |n=1+3 |01->17
+
+Codeword            ->   0  1  2  3  4  5  6  7  8  9 10 11 12          13 Codewords
+Sizes[Codeword]     -> { 0, 0, 0, 0, 2, 0, 1, 3, 0, 0, 0, 0, 3, }
+```
+
+The literal and distance alphabets are generated from their codelengths as in [Prefix Codes](#prefix-codes)
+
+The last chunk of data is decoded using the generated literal and distance alphabets and the tables defined in [Length and Distance Codes](#png-length-and-distance-codes), resulting in the raw data to be defiltered
 
 ### 3. Raw data to colorarray
 Using the raw data from [2x2_uncompressed.png](2x2_uncompressed.png) for this example
@@ -280,23 +341,11 @@ Reconstructed 2 |             | 15 13 e3 15 13 e3 |
                               00(x) + e3(b) = e3
 ```
 
-
 ### Helpful resources
 PNG Specification - https://www.w3.org/TR/png/
 RFC 1950, ZLIB Compressed Data Specification - https://www.rfc-editor.org/rfc/rfc1950
 RFC 1951, Deflate Compressed Data Specification - https://www.rfc-editor.org/rfc/rfc1951
 Basic PNG reader(Article) - https://handmade.network/forums/articles/t/2822-tutorial_implementing_a_basic_png_reader_the_handmade_way
-
-```cpp
-data->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0)/*if color > 4 return 1 else 0*/;
-		//^ Understanding the statement above
-		//* color	channels	1st ternary	2nd ternary
-		//*	0		1 gray		1			0
-		//*	2		3 RGB		3			0
-		//*	3		1 index		1			0
-		//*	4		2 grayA		1			1
-		//*	6		4 RGBA		3			1
-```
 
 ### Interesting Bits
 
@@ -333,17 +382,16 @@ void drawRGBAarray(int width, int height, int nchannels, unsigned char *img_RGBA
     for (int h=0; h<height; h++){
         for (int w=0; w<width; w++){
 			int index = nchannels*(h*width+w);
-
-            if (nchannels == 4 && !(img_RGBA[index+3])) {
+			
+            if ((~nchannels & 1) && !(img_RGBA[index+(nchannels-1)])) {
                 printf("\x1b[0m  ");
             } else {
- 				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+1], (int)img_RGBA[index+2]);
+ 				printf("\x1b[48;2;%i;%i;%im  ", (int)img_RGBA[index], (int)img_RGBA[index+(nchannels/3)], (int)img_RGBA[index+2*(nchannels/3)]);
 			}
         }
         printf("\x1b[0m\n");
     }
 }
-
 
 int main() {
     drawRGBAarray(width, height, channels, RGBAarray);
