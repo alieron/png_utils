@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <iostream>
 
 #include "png_utils.h"
 
@@ -61,5 +62,7 @@ int main() {
     uint8_t *RGBAarray = openPNG("images/6x6_dynamic_huffman.png", &width, &height, &channels);
 	if (RGBAarray == NULL) return -1; // catch error if any
 	
-	drawRGBAarray(width, height, channels, RGBAarray);   
+	drawRGBAarray(width, height, channels, RGBAarray);
+
+	writePNG("test.png", width, height, channels, RGBAarray);
 }
