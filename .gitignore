@@ -10,3 +10,4 @@ temp.cpp
 compile_stbi
 run_stbi.cpp
 stb_image.h
+stb_image_write.h
