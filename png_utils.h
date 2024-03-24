@@ -477,6 +477,7 @@ static int createRGBAarray(PNG_data *image, uint8_t *scanlines) {
 
 		memcpy(image->colorarray + bpl * y, cur_line, bpl);
 	}
+	free(scan_buff);
 	return 1;
 }
 
@@ -631,20 +632,111 @@ static void setCRC(uint8_t **pbuffer, int len) {
 	set4bytes(pbuffer, ~crc);
 }
 
+// Apply filter to the current line for filters != 0
+static void filterline(uint8_t *out_line, uint8_t *cur_line, int filter, int bpl, int sep) {
+	int i;
+	switch (filter) {
+		// Should be protected
+		// case 0: //NONE x 
+		// 	memcpy(out_line, cur_line, bpl);
+		case 1: //SUB x - a
+			memcpy(out_line, cur_line, sep); // x + 0
+			for(i = sep; i < bpl; i++) { // x + a
+				out_line[i] = (cur_line[i] - cur_line[i-sep]) & 255; // the &255 ensures that the result doesn't exceed 255/8bits
+			}
+			return;
+		case 2: //UP x - b
+			for(i = 0; i < bpl; i++) { // x + b
+				out_line[i] = (cur_line[i] - cur_line[i-bpl]) & 255;
+				}
+			return;
+		case 3: //AVG x - floor((a+b)/2)
+			for (i = 0; i < sep; i++ ) { // x + floor((0+b)/2)
+				out_line[i] = (cur_line[i] - (cur_line[i-bpl] >> 1)) & 255; // >>1 acts as the floor(x/2) required for avg
+			}
+			for (i = sep; i < bpl; i++) { // x + floor((a+b)/2)
+				out_line[i] = (cur_line[i] - ((cur_line[i-sep] + cur_line[i-bpl]) >> 1)) & 255;
+			}
+			return;
+		case 4: //PAETH x - paeth(a, b, c)
+			for(i = 0; i < sep; i++) { // paeth(0,b,0) = b
+				out_line[i] = (cur_line[i] - (cur_line-bpl)[i]) & 255;
+			}
+			for (i = sep; i < bpl; i++) {
+				out_line[i] = (cur_line[i] - paeth(cur_line[i-sep], cur_line[i-bpl], cur_line[i-bpl-sep])) & 255;
+			}
+			return;
+		case 5: //AVG_FIRST x = floor((a+0)/2)
+			memcpy(out_line, cur_line, sep); // First pixel is untouched
+			for (i = sep; i < bpl; i++) {
+				out_line[i] = (cur_line[i] - (cur_line[i-sep] >> 1)) & 255;
+			}
+			return;
+	}
+}
+
+static void applyfilter(uint8_t *out_buff, uint8_t *pixels, int width, int height, int channels) {
+	int bpl = channels * width;
+	int sep = channels;
+	int best_filt, filter;
+
+	uint8_t first_line_filter[5] = { 0, 1, 0, 5, 1 };
+	uint8_t filter_order[5] = { 4, 3, 2, 0, 1 }; // Start at higher filter type, since 0 and 1 are more common
+	uint8_t *filtered_line = (uint8_t *) malloc(bpl);
+	uint8_t *out = out_buff;
+
+	int y, i, j;
+	for (y = 0; y < height; y++) {
+		unsigned int ent, best_ent = ~0u;
+
+		for (i = 0; i < 5; i++) {
+			filter = y == 0 ? first_line_filter[i] : i;
+			
+			if (filter == 0 ) memcpy(filtered_line, pixels + (y * bpl), bpl);
+			else filterline(filtered_line, pixels + (y * bpl), filter, bpl, sep);
+
+			// Calculate entropy for current filter type, we want the lowest ent
+			ent = 0;
+			for (j = 0; j < bpl; j++) ent += filtered_line[j];
+			// ent /= width;
+			if (ent < best_ent) {
+				best_ent = ent;
+				best_filt = i;
+			}
+			// printf("{%d: %d, (%d)}", i, ent, best_filt);
+		}
+
+		if (filter != best_filt) {
+			filter = y == 0 ? first_line_filter[best_filt] : best_filt;
+			if (filter == 0 ) memcpy(filtered_line, pixels + (y * bpl), bpl);
+			else filterline(filtered_line, pixels + (y * bpl), filter, bpl, sep);
+		}	
+	
+		*out++ = best_filt;
+		memcpy(out, filtered_line, bpl);
+		out += bpl;
+	}
+	free(filtered_line);
+}
+
+#define LSB2BYTES(x) ((x & 0xff00) >> 8) | ((x & 0xff) << 8)
+
 uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) {
     uint8_t png_sig[8] = { 137,80,78,71,13,10,26,10 };
 	uint8_t colors[4] = { 0, 4, 2, 6 };
 
 	// int comp_len;
-	int comp_len=0;
-	int bpl = width * channels;
+	int comp_len=width * height * channels + height;
 
+	uint8_t *scanlines = (uint8_t *) malloc(width * height * channels + height);
+	applyfilter(scanlines, pixels, width, height, channels);
 	//zlib compression
 
 	*len = 8 + 12+13 + 12+comp_len +12;
 	uint8_t *png_buff = (uint8_t *) malloc(*len);
 	uint8_t *bp = png_buff;
 
+	// PNG Signature
 	setnbytes(&bp, png_sig, 8);
 	// IHDR chunk
 	set4bytes(&bp, 13); // Length
@@ -659,10 +751,21 @@ uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) 
 	setCRC(&bp,13+4);
 
 	// IDAT chunk
-	set4bytes(&bp, comp_len); // Length
+	// set4bytes(&bp, comp_len); // Length
+	set4bytes(&bp, comp_len+7);
 	set4bytes(&bp, CHUNK_TYPE('I', 'D', 'A', 'T'));
-	setnbytes(&bp, {}, comp_len);
-	setCRC(&bp, comp_len+4);
+	
+	// Testing uncompressed
+	setbyte(&bp, 8);
+	setbyte(&bp, 0x1d);
+	setbyte(&bp, 1);
+	uint16_t rawlen = LSB2BYTES(comp_len);
+	set4bytes(&bp, (rawlen << 16) + rawlen ^ 0xffff);
+	setnbytes(&bp, scanlines, comp_len);
+	
+	// setnbytes(&bp, {}, comp_len);
+	setCRC(&bp, comp_len+4+7);
+	// setCRC(&bp, comp_len+4);
 
 	// IEND chunk
 	set4bytes(&bp, 0); // Length
@@ -671,8 +774,9 @@ uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) 
 	// setCRC(&bp,0+4);
 
 	printf("{ ");
-	for (int i=0; i<*len; i++) {
+	for (int i=0; i<(*len)+5; i++) {
 		printf("%02x, ", png_buff[i]);
+		// if (i == 40 || i== 40+comp_len) printf("|");
 	}
 	printf("}\n");
 	
