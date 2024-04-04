@@ -37,32 +37,34 @@ typedef struct{
 #define CHUNK_TYPE(a,b,c,d) (((unsigned) a << 24) + ((unsigned) b << 16) + ((unsigned) c << 8) + (unsigned) d)
 
 // Returns the current value that pbuffer points to and increments pbuffer
-static uint8_t getbyte(uint8_t **pbuffer) {
+static uint8_t getbyte(uint8_t *&pbuffer) { // could be replaced with uint8_t *&pbuffer, so the function call would be getbyte(bp) instead of getbyte(bp)
 	// no protection end of buffer is reached
-	return *((*pbuffer)++);
+	return *(pbuffer++); // if changed to *&pbufer, use return *(pbuffer++)
 }
 
 // Returns 4 consecutive bytes as an int, useful for getting 4 byte chunks
-static uint32_t get4bytes(uint8_t **pbuffer) {
+static uint32_t get4bytes(uint8_t *&pbuffer) {
   	return (uint32_t) (getbyte(pbuffer) << 24) + (getbyte(pbuffer) << 16) + (getbyte(pbuffer) << 8) + getbyte(pbuffer);
 }
 
 // Jump forward in the image byte buffer by n bytes
-static void skipnbytes(uint8_t **pbuffer, unsigned int n) {
+static void skipnbytes(uint8_t *&pbuffer, unsigned int n) {
 	// no protection end of buffer is reached
-	(*pbuffer) += n;
+	// (*pbuffer) += n;
+	pbuffer += n;
 }
 
 // Returns n consequtive bytes as an array of unsigned chars, useful for getting chunks of data
-static int getnbytes(uint8_t **pbuffer, uint8_t *bytes_out, int n) {
+static int getnbytes(uint8_t *&pbuffer, uint8_t *bytes_out, int n) {
 	// no protection end of buffer is reached
-	memcpy(bytes_out, *pbuffer, n);
-	(*pbuffer) += n;
+	memcpy(bytes_out, pbuffer, n);
+	// (*pbuffer) += n;
+	pbuffer += n;
 	return 1;
 }
 
 // Verifies that the first 8 bytes of the buffer corresponds to the png file signature
-static int validsignature(uint8_t **pbuffer) {
+static int validsignature(uint8_t *&pbuffer) {
 	static const uint8_t png_sig[8] = { 137,80,78,71,13,10,26,10 };
 
 	int i = 0;
@@ -72,7 +74,7 @@ static int validsignature(uint8_t **pbuffer) {
 }
 
 // Returns the length and type of the current chunk from the first 8 bytes of the chunk
-static void getchunkheader(uint8_t **pbuffer, PNG_chunk_header *chunk) {
+static void getchunkheader(uint8_t *&pbuffer, PNG_chunk_header *chunk) {
 	chunk->length = get4bytes(pbuffer);
 	chunk->type = get4bytes(pbuffer);
 }
@@ -80,7 +82,7 @@ static void getchunkheader(uint8_t **pbuffer, PNG_chunk_header *chunk) {
 // Refills the bit buffer such that there are at least n bits of data in it
 static void refill_bit_buffer(zlib_stream *zstream, int n) {
 	do {
-		zstream->bit_buffer |= getbyte(&zstream->buffer) << zstream->nbits;
+		zstream->bit_buffer |= getbyte(zstream->buffer) << zstream->nbits;
 		zstream->nbits += 8;
 	} while (zstream->nbits < n);
 }
@@ -120,7 +122,7 @@ static uint16_t peakzbitsrev(zlib_stream *zstream, int n) {
 }
 
 // Check that the zstream header is valid
-static int valid_zlib_header(uint8_t **zbuffer) {
+static int valid_zlib_header(uint8_t *&zbuffer) {
 	uint8_t cmf = getbyte(zbuffer);
 	uint8_t cm = cmf & 15; //get compression method from the 4 last bits in the cmf byte
 	if (cm != 8) return 0; //only 8 is supported //TODO: Add error handling
@@ -353,7 +355,7 @@ static int inflate_huffman_block(zlib_stream *zstream, uint8_t *scanlines) {
 
 // Computes the scanlines from the zstream
 static int decode_zlib_stream(zlib_stream *zstream, uint8_t *scanlines) {
-	if (!valid_zlib_header(&zstream->buffer)) return 0;
+	if (!valid_zlib_header(zstream->buffer)) return 0;
 
 	zstream->nbits = 0;
 	zstream->bit_buffer = 0;
@@ -487,7 +489,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 	int first = 1, color = 0, interlace = 0;
 	uint32_t dataoffset = 0;
 
-    if (!validsignature(&bp)) return 0;
+    if (!validsignature(bp)) return 0;
 
 	zlib_stream zstream;
 	zstream.buffer = NULL;
@@ -495,21 +497,21 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 	PNG_chunk_header chunk;
 	
     for (;;) {
-		getchunkheader(&bp, &chunk);
+		getchunkheader(bp, &chunk);
 		switch(chunk.type) {
 			case CHUNK_TYPE('I','H','D','R'):
 				if (!first) return 0; //TODO: Add error handling
 				first = 0;
 				if (chunk.length != 13) return 0; //TODO: Add error handling
-				image->width = get4bytes(&bp);
-				image->height = get4bytes(&bp);
+				image->width = get4bytes(bp);
+				image->height = get4bytes(bp);
 				if (image->width == 0 || image->height == 0) return 0; // 0 width or height is invalid //TODO: Add error handling
-				image->depth = getbyte(&bp); if (image->depth != 8 && image->depth != 16) return 0; // only support 8 for now, explore 16 later //TODO: Add error handling
-				color = getbyte(&bp); if (color != 0 && color != 2 && color != 4 && color != 6) return 0; //only RGB and RGBA are supported for this simple decoder //TODO: Add error handling
+				image->depth = getbyte(bp); if (image->depth != 8 && image->depth != 16) return 0; // only support 8 for now, explore 16 later //TODO: Add error handling
+				color = getbyte(bp); if (color != 0 && color != 2 && color != 4 && color != 6) return 0; //only RGB and RGBA are supported for this simple decoder //TODO: Add error handling
 				int comp, filter;
-				comp = getbyte(&bp); if (comp) return 0; //comp has to be 0 //TODO: Add error handling
-				filter = getbyte(&bp); if (filter) return 0; //filter has to be 0 //TODO: Add error handling
-				interlace = getbyte(&bp); if (interlace) return 0; //only 0 and 1 are valid interlaces, but only support 0 //TODO: Add error handling
+				comp = getbyte(bp); if (comp) return 0; //comp has to be 0 //TODO: Add error handling
+				filter = getbyte(bp); if (filter) return 0; //filter has to be 0 //TODO: Add error handling
+				interlace = getbyte(bp); if (interlace) return 0; //only 0 and 1 are valid interlaces, but only support 0 //TODO: Add error handling
 				image->channels = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0);
 				//* color	channels	1st ternary	2nd ternary
 				//*	0		1 gray		1			0
@@ -520,7 +522,7 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				
 				// if ((1 << 30) / data->width / data->channels < data->height) return 0; //image would be too large //TODO: Add error handling
 
-				skipnbytes(&bp, 4); //Skip over the CRC bytes
+				skipnbytes(bp, 4); //Skip over the CRC bytes
           		break;
 
 			case CHUNK_TYPE('I','D','A','T'):
@@ -531,10 +533,10 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
 				pdata = (uint8_t *) realloc(zstream.buffer, dataoffset + chunk.length); //Resize the rawdata block to be able to recieve the data from the IDAT chunk
 				zstream.buffer = pdata;
 
-				if (!getnbytes(&bp, zstream.buffer + dataoffset, chunk.length)) return 0; //TODO: Add error handling
+				if (!getnbytes(bp, zstream.buffer + dataoffset, chunk.length)) return 0; //TODO: Add error handling
 				dataoffset += chunk.length;
 				
-				skipnbytes(&bp, 4); //Skip over the CRC bytes
+				skipnbytes(bp, 4); //Skip over the CRC bytes
 				break;
 
 			case CHUNK_TYPE('I','E','N','D'):
@@ -685,23 +687,23 @@ static void applyfilter(uint8_t *out_buff, uint8_t *pixels, int width, int heigh
 	uint8_t *filtered_line = (uint8_t *) malloc(bpl);
 	uint8_t *out = out_buff;
 
-	int y, i, j;
+	int y, f, i;
 	for (y = 0; y < height; y++) {
 		unsigned int ent, best_ent = ~0u;
 
-		for (i = 0; i < 5; i++) {
-			filter = y == 0 ? first_line_filter[i] : i;
+		for (f = 0; f < 5; f++) {
+			filter = y == 0 ? first_line_filter[f] : f;
 			
 			if (filter == 0 ) memcpy(filtered_line, pixels + (y * bpl), bpl);
 			else filterline(filtered_line, pixels + (y * bpl), filter, bpl, sep);
 
 			// Calculate entropy for current filter type, we want the lowest ent
 			ent = 0;
-			for (j = 0; j < bpl; j++) ent += filtered_line[j];
+			for (i = 0; i < bpl; i++) ent += filtered_line[i];
 			// ent /= width;
 			if (ent < best_ent) {
 				best_ent = ent;
-				best_filt = i;
+				best_filt = f;
 			}
 			// printf("{%d: %d, (%d)}", i, ent, best_filt);
 		}
@@ -721,16 +723,49 @@ static void applyfilter(uint8_t *out_buff, uint8_t *pixels, int width, int heigh
 
 #define LSB2BYTES(x) ((x & 0xff00) >> 8) | ((x & 0xff) << 8)
 
+static uint8_t *uncompressed_data(uint8_t *scanlines, int scan_len, int *comp_len) {
+	if (!scan_len) return NULL;
+	
+	*comp_len = scan_len + 7;
+	uint8_t *uncomp_data = (uint8_t *) malloc(*comp_len);
+	uint8_t *p_uncomp = uncomp_data; // dynamic ptr
+
+	setbyte(&p_uncomp, 8);
+	setbyte(&p_uncomp, 0x1d);
+	setbyte(&p_uncomp, 1);
+
+	uint16_t rawlen = LSB2BYTES(scan_len);
+	set4bytes(&p_uncomp, (rawlen << 16) + rawlen ^ 0xffff);
+	setnbytes(&p_uncomp, scanlines, scan_len);
+	
+	return uncomp_data;
+}
+
+// Use fixed/dynamic huffman encoding to compress the data, depending on which is more efficient
+static uint8_t *deflate_scanlines(uint8_t *scanlines, int scan_len, int *comp_len) {
+	return 0;
+}
+
+
+
 uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) {
     uint8_t png_sig[8] = { 137,80,78,71,13,10,26,10 };
 	uint8_t colors[4] = { 0, 4, 2, 6 };
 
-	// int comp_len;
-	int comp_len=width * height * channels + height;
+	int scan_len = width * height * channels;
+	if (!scan_len) return NULL; // if any one of the inputs are 0, there will be no valid output
+	scan_len += height;
+	int comp_len;
 
-	uint8_t *scanlines = (uint8_t *) malloc(width * height * channels + height);
+	uint8_t *scanlines = (uint8_t *) malloc(scan_len);
 	applyfilter(scanlines, pixels, width, height, channels);
+
+	uint8_t *comp_buff;
+	comp_buff = uncompressed_data(scanlines, scan_len, &comp_len); // option for writing as uncompressed image
+	
+	// comp_buff = deflate_scanlines(scanlines, scan_len, &comp_len);
 	//zlib compression
+	free(scanlines);
 
 	*len = 8 + 12+13 + 12+comp_len +12;
 	uint8_t *png_buff = (uint8_t *) malloc(*len);
@@ -748,38 +783,26 @@ uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) 
 	setbyte(&bp, 0); // Comp
 	setbyte(&bp, 0); // Filter
 	setbyte(&bp, 0); // Interlace
-	setCRC(&bp,13+4);
-
+	setCRC(&bp, 13+4);
 	// IDAT chunk
-	// set4bytes(&bp, comp_len); // Length
-	set4bytes(&bp, comp_len+7);
+	set4bytes(&bp, comp_len); // Length
 	set4bytes(&bp, CHUNK_TYPE('I', 'D', 'A', 'T'));
-	
-	// Testing uncompressed
-	setbyte(&bp, 8);
-	setbyte(&bp, 0x1d);
-	setbyte(&bp, 1);
-	uint16_t rawlen = LSB2BYTES(comp_len);
-	set4bytes(&bp, (rawlen << 16) + rawlen ^ 0xffff);
-	setnbytes(&bp, scanlines, comp_len);
-	
-	// setnbytes(&bp, {}, comp_len);
-	setCRC(&bp, comp_len+4+7);
-	// setCRC(&bp, comp_len+4);
-
+	setnbytes(&bp, comp_buff, comp_len);
+	setCRC(&bp, comp_len+4);
 	// IEND chunk
 	set4bytes(&bp, 0); // Length
 	set4bytes(&bp, CHUNK_TYPE('I', 'E', 'N', 'D'));
 	set4bytes(&bp, 0xae426082); // Standard CRC no point calculating
-	// setCRC(&bp,0+4);
+	// setCRC(bp,0+4);
 
 	printf("{ ");
-	for (int i=0; i<(*len)+5; i++) {
+	for (int i=0; i<(*len); i++) {
 		printf("%02x, ", png_buff[i]);
 		// if (i == 40 || i== 40+comp_len) printf("|");
 	}
 	printf("}\n");
 	
+	free(comp_buff);
 	return png_buff;
 }
 
@@ -812,10 +835,9 @@ uint8_t *openPNG(const char *filename, int *width, int *height, int *channels) {
 }
 
 int writePNG(const char *filename, int width, int height, int channels, void *pixels) {
-    
 	int len;
 	uint8_t *png_buff = genPNG((uint8_t *) pixels, width, height, channels, &len);
-	return 0;
+	return 0; // Pause
 	if (png_buff == NULL) return 0;
 
 	FILE *fp = fopen(filename, "wb");
@@ -824,7 +846,7 @@ int writePNG(const char *filename, int width, int height, int channels, void *pi
     fwrite(png_buff, 1, len, fp);
     fclose(fp);
 
-	// free(png_buff);
+	free(png_buff);
 	
 	return 1;
 }
