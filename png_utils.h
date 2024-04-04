@@ -58,7 +58,6 @@ static void skipnbytes(uint8_t *&pbuffer, unsigned int n) {
 static int getnbytes(uint8_t *&pbuffer, uint8_t *bytes_out, int n) {
 	// no protection end of buffer is reached
 	memcpy(bytes_out, pbuffer, n);
-	// (*pbuffer) += n;
 	pbuffer += n;
 	return 1;
 }
@@ -569,20 +568,21 @@ static int parsePNG(uint8_t *buffer, PNG_data *image) {
     return 1;
 }
 
-static void setbyte(uint8_t **pbuffer, uint8_t value) {
-	*((*pbuffer)++) = value;
+static void setbyte(uint8_t *&pbuffer, uint8_t value) {
+	*(pbuffer++) = value;
 }
 
-static void set4bytes(uint8_t **pbuffer, int value) {
+static void set4bytes(uint8_t *&pbuffer, int value) {
 	setbyte(pbuffer, (uint8_t) (value >> 24));
 	setbyte(pbuffer, (uint8_t) (value >> 16));
 	setbyte(pbuffer, (uint8_t) (value >> 8));
 	setbyte(pbuffer, (uint8_t) (value));
 }
 
-static void setnbytes(uint8_t **pbuffer, uint8_t *bytes, int n) {
-	memcpy(*pbuffer, bytes, n);
-	(*pbuffer) += n;
+static void setnbytes(uint8_t *&pbuffer, uint8_t *bytes, int n) {
+	memcpy(pbuffer, bytes, n);
+	pbuffer += n;
+	// (*pbuffer) += n;
 }
 
 // Generated as per https://www.w3.org/TR/png-3/#D-CRCAppendix
@@ -622,8 +622,8 @@ static const uint32_t crc_table[256] =
 	0xb3667a2e,0xc4614ab8,0x5d681b02,0x2a6f2b94,0xb40bbe37,0xc30c8ea1,0x5a05df1b,0x2d02ef8d
 };
 
-static void setCRC(uint8_t **pbuffer, int len) {
-	uint8_t *chunk = *pbuffer - len;
+static void setCRC(uint8_t *&pbuffer, int len) {
+	uint8_t *chunk = pbuffer - len;
 	uint32_t crc = ~0;
 
 	int i;
@@ -730,13 +730,13 @@ static uint8_t *uncompressed_data(uint8_t *scanlines, int scan_len, int *comp_le
 	uint8_t *uncomp_data = (uint8_t *) malloc(*comp_len);
 	uint8_t *p_uncomp = uncomp_data; // dynamic ptr
 
-	setbyte(&p_uncomp, 8);
-	setbyte(&p_uncomp, 0x1d);
-	setbyte(&p_uncomp, 1);
+	setbyte(p_uncomp, 8);
+	setbyte(p_uncomp, 0x1d);
+	setbyte(p_uncomp, 1);
 
 	uint16_t rawlen = LSB2BYTES(scan_len);
-	set4bytes(&p_uncomp, (rawlen << 16) + rawlen ^ 0xffff);
-	setnbytes(&p_uncomp, scanlines, scan_len);
+	set4bytes(p_uncomp, (rawlen << 16) + rawlen ^ 0xffff);
+	setnbytes(p_uncomp, scanlines, scan_len);
 	
 	return uncomp_data;
 }
@@ -772,27 +772,27 @@ uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) 
 	uint8_t *bp = png_buff;
 
 	// PNG Signature
-	setnbytes(&bp, png_sig, 8);
+	setnbytes(bp, png_sig, 8);
 	// IHDR chunk
-	set4bytes(&bp, 13); // Length
-	set4bytes(&bp, CHUNK_TYPE('I', 'H', 'D', 'R'));
-	set4bytes(&bp, width);
-	set4bytes(&bp, height);
-	setbyte(&bp, 8); // Depth
-	setbyte(&bp, colors[channels-1]);
-	setbyte(&bp, 0); // Comp
-	setbyte(&bp, 0); // Filter
-	setbyte(&bp, 0); // Interlace
-	setCRC(&bp, 13+4);
+	set4bytes(bp, 13); // Length
+	set4bytes(bp, CHUNK_TYPE('I', 'H', 'D', 'R'));
+	set4bytes(bp, width);
+	set4bytes(bp, height);
+	setbyte(bp, 8); // Depth
+	setbyte(bp, colors[channels-1]);
+	setbyte(bp, 0); // Comp
+	setbyte(bp, 0); // Filter
+	setbyte(bp, 0); // Interlace
+	setCRC(bp, 13+4);
 	// IDAT chunk
-	set4bytes(&bp, comp_len); // Length
-	set4bytes(&bp, CHUNK_TYPE('I', 'D', 'A', 'T'));
-	setnbytes(&bp, comp_buff, comp_len);
-	setCRC(&bp, comp_len+4);
+	set4bytes(bp, comp_len); // Length
+	set4bytes(bp, CHUNK_TYPE('I', 'D', 'A', 'T'));
+	setnbytes(bp, comp_buff, comp_len);
+	setCRC(bp, comp_len+4);
 	// IEND chunk
-	set4bytes(&bp, 0); // Length
-	set4bytes(&bp, CHUNK_TYPE('I', 'E', 'N', 'D'));
-	set4bytes(&bp, 0xae426082); // Standard CRC no point calculating
+	set4bytes(bp, 0); // Length
+	set4bytes(bp, CHUNK_TYPE('I', 'E', 'N', 'D'));
+	set4bytes(bp, 0xae426082); // Standard CRC no point calculating
 	// setCRC(bp,0+4);
 
 	printf("{ ");
