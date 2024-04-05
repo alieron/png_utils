@@ -622,12 +622,13 @@ static const uint32_t crc_table[256] =
 	0xb3667a2e,0xc4614ab8,0x5d681b02,0x2a6f2b94,0xb40bbe37,0xc30c8ea1,0x5a05df1b,0x2d02ef8d
 };
 
-static void setCRC(uint8_t *&pbuffer, int len) {
-	uint8_t *chunk = pbuffer - len;
+// Sets the CRC bytes based on the previous n bytes
+static void setCRC(uint8_t *&pbuffer, int n) {
+	uint8_t *chunk = pbuffer - n;
 	uint32_t crc = ~0;
 
 	int i;
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < n; i++) {
 		crc = crc_table[chunk[i] ^ (crc & 0xff)] ^ (crc >> 8);
 	}
 
@@ -677,6 +678,7 @@ static void filterline(uint8_t *out_line, uint8_t *cur_line, int filter, int bpl
 	}
 }
 
+// Determine the best filter for each scanline and apply it, returning a buffer of the filtered scanlines
 static void applyfilter(uint8_t *out_buff, uint8_t *pixels, int width, int height, int channels) {
 	int bpl = channels * width;
 	int sep = channels;
@@ -705,7 +707,6 @@ static void applyfilter(uint8_t *out_buff, uint8_t *pixels, int width, int heigh
 				best_ent = ent;
 				best_filt = f;
 			}
-			// printf("{%d: %d, (%d)}", i, ent, best_filt);
 		}
 
 		if (filter != best_filt) {
@@ -743,11 +744,13 @@ static uint8_t *uncompressed_data(uint8_t *scanlines, int scan_len, int *comp_le
 
 // Use fixed/dynamic huffman encoding to compress the data, depending on which is more efficient
 static uint8_t *deflate_scanlines(uint8_t *scanlines, int scan_len, int *comp_len) {
+	
 	return 0;
 }
 
+// #define UNCOMPRESSED_MODE // Use this flag to tell the PNG writer to use the uncompressed mode
 
-
+// Generate the PNG buffer from a pixel buffer and characteristics
 uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) {
     uint8_t png_sig[8] = { 137,80,78,71,13,10,26,10 };
 	uint8_t colors[4] = { 0, 4, 2, 6 };
@@ -761,9 +764,11 @@ uint8_t *genPNG(uint8_t *pixels, int width, int height, int channels, int *len) 
 	applyfilter(scanlines, pixels, width, height, channels);
 
 	uint8_t *comp_buff;
+#ifdef UNCOMPRESSED_MODE
 	comp_buff = uncompressed_data(scanlines, scan_len, &comp_len); // option for writing as uncompressed image
-	
-	// comp_buff = deflate_scanlines(scanlines, scan_len, &comp_len);
+#else
+	comp_buff = deflate_scanlines(scanlines, scan_len, &comp_len);
+#endif
 	//zlib compression
 	free(scanlines);
 
